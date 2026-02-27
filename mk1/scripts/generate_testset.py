@@ -9,9 +9,9 @@ Produces questions that stress-test retrieval relevancy:
 Run once to create testset/sherlock_holmes.json, then commit the output.
 
 Usage:
-    python generate_testset.py
-    python generate_testset.py --num-questions 50
-    python generate_testset.py --difficulty hard
+    python scripts/generate_testset.py
+    python scripts/generate_testset.py --num-questions 50
+    python scripts/generate_testset.py --difficulty hard
 """
 
 import argparse
@@ -25,9 +25,11 @@ import sys
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 
 def load_config() -> dict:
-  config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+  config_path = os.path.join(_PROJECT_ROOT, "config.json")
   if os.path.exists(config_path):
     with open(config_path) as f:
       return json.load(f)
@@ -309,12 +311,11 @@ async def main():
   parser.add_argument("--seed", type=int, default=42)
   args = parser.parse_args()
 
-  script_dir = os.path.dirname(os.path.abspath(__file__))
-  corpus_path = os.path.join(script_dir, args.corpus_path) if not os.path.isabs(args.corpus_path) else args.corpus_path
-  output_path = os.path.join(script_dir, args.output) if not os.path.isabs(args.output) else args.output
+  corpus_path = os.path.join(_PROJECT_ROOT, args.corpus_path) if not os.path.isabs(args.corpus_path) else args.corpus_path
+  output_path = os.path.join(_PROJECT_ROOT, args.output) if not os.path.isabs(args.output) else args.output
 
   if not os.path.exists(corpus_path):
-    print(f"Corpus not found at {corpus_path}. Run download_corpus.sh first.")
+    print(f"Corpus not found at {corpus_path}. Run bash scripts/download_corpus.sh first.")
     sys.exit(1)
 
   print(f"Loading corpus from {corpus_path}...")

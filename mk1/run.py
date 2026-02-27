@@ -9,7 +9,7 @@ Usage:
     python run.py --skip-index                             # Reuse existing DBs
     python run.py --evaluate-only                          # Re-evaluate, no re-query
     python run.py --openai-model gpt-5.2                   # Override model
-    python chart.py                                        # View results
+    python scripts/chart.py                                  # View results
 """
 
 import argparse
@@ -385,7 +385,7 @@ async def run_method(
 
 async def evaluate_single_method(method_name: str, config: dict) -> None:
   """Run RAGAS evaluation on a single method's saved result file."""
-  from evaluate import evaluate_method
+  from scripts.evaluate import evaluate_method
 
   filepath = _method_result_path(method_name)
   if not os.path.exists(filepath):
@@ -513,7 +513,7 @@ async def main():
 
   if not os.path.exists(corpus_path):
     print(f"Corpus not found: {corpus_path}")
-    print("Run: bash download_corpus.sh")
+    print("Run: bash scripts/download_corpus.sh")
     sys.exit(1)
 
   log.info("Loading corpus from %s", corpus_path)
@@ -540,7 +540,7 @@ async def main():
 
   if not os.path.exists(testset_path):
     print(f"Test set not found: {testset_path}")
-    print("Run: python generate_testset.py")
+    print("Run: python scripts/generate_testset.py")
     sys.exit(1)
 
   testset = load_testset(testset_path)
@@ -623,7 +623,7 @@ async def main():
     # --- RAGAS evaluation (per method, immediately after querying) ---
     ctag_main = f"{_CYAN}[{method_name}]{_RESET}"
     if not args.skip_ragas and method_data.get("per_question"):
-      from evaluate import evaluate_method
+      from scripts.evaluate import evaluate_method
 
       log.info("%s %sRunning RAGAS evaluation%s...", ctag_main, _YELLOW, _RESET)
       ragas_start = time.perf_counter()

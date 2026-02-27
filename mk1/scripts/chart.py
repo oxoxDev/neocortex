@@ -3,12 +3,12 @@
 Reads per-method JSON files from results/ directory and produces formatted output.
 
 Usage:
-    python chart.py                    # Markdown table (default)
-    python chart.py --chart table      # Markdown table
-    python chart.py --chart csv        # CSV export
-    python chart.py --chart bar        # Bar chart (requires matplotlib)
-    python chart.py --sort relevancy   # Sort by answer_relevancy
-    python chart.py --results-dir results/  # Custom results directory
+    python scripts/chart.py                    # Markdown table (default)
+    python scripts/chart.py --chart table      # Markdown table
+    python scripts/chart.py --chart csv        # CSV export
+    python scripts/chart.py --chart bar        # Bar chart (requires matplotlib)
+    python scripts/chart.py --sort relevancy   # Sort by answer_relevancy
+    python scripts/chart.py --results-dir results/  # Custom results directory
 """
 
 import argparse
@@ -18,6 +18,8 @@ import json
 import os
 import sys
 from typing import Any
+
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def load_results(results_dir: str) -> dict:
@@ -305,7 +307,7 @@ def print_bar_chart(data: dict, sort_by: str | None = None):
     ax.legend(fontsize=8)
 
   plt.tight_layout()
-  output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results", "chart.png")
+  output_path = os.path.join(_PROJECT_ROOT, "results", "chart.png")
   os.makedirs(os.path.dirname(output_path), exist_ok=True)
   plt.savefig(output_path, dpi=150)
   print(f"Chart saved to {output_path}")
@@ -405,7 +407,7 @@ def print_per_question_chart(data: dict):
     axes_flat[idx].set_visible(False)
 
   plt.tight_layout(rect=[0, 0, 1, 0.95])
-  output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results", "per_question_chart.png")
+  output_path = os.path.join(_PROJECT_ROOT, "results", "per_question_chart.png")
   os.makedirs(os.path.dirname(output_path), exist_ok=True)
   plt.savefig(output_path, dpi=150, bbox_inches="tight")
   print(f"Chart saved to {output_path}")
@@ -447,8 +449,7 @@ def main():
   args = parser.parse_args()
 
   # Resolve results directory
-  script_dir = os.path.dirname(os.path.abspath(__file__))
-  results_dir = args.results_dir or os.path.join(script_dir, "results")
+  results_dir = args.results_dir or os.path.join(_PROJECT_ROOT, "results")
 
   if not os.path.isdir(results_dir):
     print(f"Results directory not found: {results_dir}")

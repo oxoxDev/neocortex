@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CORPUS_DIR="$SCRIPT_DIR/corpus"
 OUTPUT="$CORPUS_DIR/adventures_of_sherlock_holmes.txt"
 URL="https://www.gutenberg.org/cache/epub/1661/pg1661.txt"

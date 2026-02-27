@@ -12,14 +12,14 @@ This is a **RAG (Retrieval-Augmented Generation) benchmark suite** that compares
 # Setup
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-bash download_corpus.sh                          # Download Sherlock Holmes corpus
+bash scripts/download_corpus.sh                   # Download Sherlock Holmes corpus
 
 # Start Neo4j (required for neocortex/neocortex_v1 methods)
 docker compose up -d
 
 # Generate test questions (uses OpenAI API)
-python generate_testset.py
-python generate_testset.py --num-questions 50 --model gpt-4o
+python scripts/generate_testset.py
+python scripts/generate_testset.py --num-questions 50 --model gpt-4o
 
 # Run benchmarks
 python run.py                                         # All methods from config.json
@@ -30,20 +30,20 @@ python run.py --skip-ragas                            # Skip RAGAS evaluation
 python run.py -q 3                                    # Run single question (0-indexed)
 
 # View results
-python chart.py                    # Markdown table
-python chart.py --chart bar        # Bar chart (matplotlib)
-python chart.py --chart questions  # Per-question breakdown
-python chart.py --chart csv        # CSV export
+python scripts/chart.py                    # Markdown table
+python scripts/chart.py --chart bar        # Bar chart (matplotlib)
+python scripts/chart.py --chart questions  # Per-question breakdown
+python scripts/chart.py --chart csv        # CSV export
 ```
 
 ## Architecture
 
-**Pipeline flow**: `download_corpus.sh` → `generate_testset.py` → `run.py` → `evaluate.py` → `chart.py`
+**Pipeline flow**: `scripts/download_corpus.sh` → `scripts/generate_testset.py` → `run.py` → `scripts/evaluate.py` → `scripts/chart.py`
 
 - **`run.py`** — Main CLI orchestrator. Loads corpus, chunks it, runs each adapter (index → query), then evaluates with RAGAS. Saves per-method JSON results to `results/`.
-- **`generate_testset.py`** — Generates RAGAS-compatible test questions using OpenAI. Produces 4 question types: inference, multi-hop, cross-story, analytical. Output: `testset/sherlock_holmes.json`.
-- **`evaluate.py`** — RAGAS evaluation wrapper (async, uses RAGAS 0.4.x `aevaluate` API). Returns aggregate and per-question scores.
-- **`chart.py`** — Results visualization (markdown table, CSV, matplotlib charts).
+- **`scripts/generate_testset.py`** — Generates RAGAS-compatible test questions using OpenAI. Produces 4 question types: inference, multi-hop, cross-story, analytical. Output: `testset/sherlock_holmes.json`.
+- **`scripts/evaluate.py`** — RAGAS evaluation wrapper (async, uses RAGAS 0.4.x `aevaluate` API). Returns aggregate and per-question scores.
+- **`scripts/chart.py`** — Results visualization (markdown table, CSV, matplotlib charts).
 - **`config.json`** — Central config: methods list, chunk params, model names, RAGAS metrics.
 
 ### Adapter System
