@@ -2,5 +2,3 @@ corpus/
 db/
 results/
 __pycache__/
-.venv/
-.env
