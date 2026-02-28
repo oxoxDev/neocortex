@@ -4,7 +4,7 @@ import json
 import sys
 from pathlib import Path
 
-# Resolve mk1/ from notebooks/helpers/config.py
+# Resolve mk1/ from benchmarks/nb_helpers/config.py
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 _REPO_ROOT = PROJECT_ROOT.parent
 
