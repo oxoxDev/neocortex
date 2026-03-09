@@ -1,6 +1,6 @@
 # Contributing to Neocortex
 
-Thank you for your interest in contributing to **Neocortex** — the AI memory system that forgets noise and remembers what matters. We welcome contributions to documentation, the Python SDK, benchmarks, and examples.
+Thank you for your interest in contributing to **Neocortex** — the AI memory system that forgets noise and remembers what matters. We welcome contributions to documentation, packages (3rd party integrations), benchmarks, and examples.
 
 ## Table of Contents
 
@@ -30,11 +30,7 @@ By participating in this project, you agree to be respectful and constructive. W
      pip install -r requirements.txt
      pip install -e .
      ```
-   - **Python SDK**: If you're working on `packages/sdk-python/`:
-     ```bash
-     cd packages/sdk-python
-     uv sync   # or: pip install -e .
-     ```
+   - **Packages**: If you're working on a package under `packages/<name>/`, use that package's install instructions (e.g. `uv sync` or `pip install -e .` in its directory).
 
 3. **Create a branch** for your work:
    ```bash
@@ -45,7 +41,7 @@ By participating in this project, you agree to be respectful and constructive. W
 
 | Path                   | Description                                                                                                                                             |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/`   | **All 3rd party integrations.** Each subfolder is a separate integration (e.g. `sdk-python/` for the Neocortex Python SDK). |
+| `packages/`   | **All 3rd party integrations.** Each subfolder is a separate integration. |
 | `benchmarks/` | Benchmark notebooks (RAGAS, BABILong, TemporalBench, Vending-Bench, LoCoMo, HotPotQA, etc.) and `nb_helpers/`                                           |
 | `examples/`            | Example notebooks and scenarios for using Neocortex                                                                                                     |
 | `gitbooks/`            | Documentation (getting started, how memory works)                                                                                                       |
@@ -58,7 +54,7 @@ By participating in this project, you agree to be respectful and constructive. W
   Fix typos, clarify explanations, or add new guides under `gitbooks/` or in the main `README.md`. Keep tone consistent with the existing docs.
 
 - **Packages (3rd party integrations)**
-  The `packages/` directory holds all 3rd party integrations (SDKs, plugins, etc.). For the Python SDK (`packages/sdk-python/`), include tests where applicable; the PyPI publish workflow runs on pushes to `main` that touch that folder. New integrations belong as new subfolders under `packages/`.
+  The `packages/` directory holds all 3rd party integrations (SDKs, plugins, etc.). Include tests where applicable; some packages have publish workflows that run on pushes to `main` when that package's files change. New integrations belong as new subfolders under `packages/`.
 
 - **Benchmarks**
   Benchmark notebooks live in `benchmarks/`. Use `nb_helpers` for config, datasets, pipeline, and metrics. Ensure runs are reproducible (fixed seeds, documented env).
@@ -75,7 +71,7 @@ By participating in this project, you agree to be respectful and constructive. W
 
 2. **Update docs** if your change affects usage, APIs, or setup (e.g. new env vars, new SDK options).
 
-3. **Test locally** — For SDK changes, run the relevant tests or example scripts; for benchmarks, run the affected notebook(s).
+3. **Test locally** — For package changes, run the relevant tests or example scripts; for benchmarks, run the affected notebook(s).
 
 4. **Push your branch** and open a PR against `main`. Describe what you changed and why.
 
