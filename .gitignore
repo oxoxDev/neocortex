@@ -1,3 +1,8 @@
-.venv
-.env
 __pycache__
+__pycache__
+.env
+.ipynb_checkpoints/
+.venv
+corpus/
+db/
+results/
