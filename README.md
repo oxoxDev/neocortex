@@ -1,8 +1,6 @@
 <div align="center">
 
-<h1>Neocortex AI Memory</h1>
-
-<h3>Your Second Brain</h3>
+<h1>Neocortex AI Memory - Your Second Brain</h1>
 
 <p><b>Human-like AI Memory&nbsp; ◦ &nbsp;1B+ Token Processing&nbsp; ◦ &nbsp;Forgets Noise&nbsp; ◦ &nbsp;Interaction-Aware</b></p>
 
@@ -14,9 +12,7 @@
 
 </div>
 
----
-
-# 🧠 Introduction to Neocortex
+<!-- # 🧠 Introduction to Neocortex -->
 
 The human brain is a master of compression. It doesn't try to remember every passing detail; instead, it aggressively prunes noise to maintain a sharp, focused, and easily accessible recall of what truly matters. In contrast, traditional AI memory systems try to remember everything. They retrieve whatever is _similar_—but similar doesn't mean important. The result? Your AI drowns in stale, irrelevant context that degrades every response.
 
@@ -24,9 +20,12 @@ Inspired by how the human brain actually works, **Neocortex** takes a different 
 
 The result: an AI memory system that can chop through over 1 billion tokens, stays lean and focused, and gets smarter with every interaction.
 
+---
+
 ### 🎯 Core Features
 
 #### Intelligent Noise Filters
+
 Memories that aren't accessed naturally decay over time. Frequently recalled knowledge becomes more durable. No manual cleanup needed — the system stays lean on its own.
 
 <div align="center">
@@ -34,6 +33,7 @@ Memories that aren't accessed naturally decay over time. Frequently recalled kno
 </div>
 
 #### Interaction-Aware
+
 Not all memories are equal. Views, reactions, replies, and content creation all signal what matters. Knowledge people engage with rises to the top; ignored information fades away.
 
 <div align="center">
@@ -41,9 +41,8 @@ Not all memories are equal. Views, reactions, replies, and content creation all 
 </div>
 
 #### Low Latency, Low Cost, High Quality
-There's no compromise on speed and quality when processing data with Neocortex. Everything is processed at low costs and low latency, while maintain high benchmarks.
 
----
+There's no compromise on speed and quality when processing data with Neocortex. Everything is processed at low costs and low latency, while maintain high benchmarks.
 
 # 📈 Benchmarks
 
@@ -112,23 +111,3 @@ await nc.insert("Sherlock Holmes lived at 221B Baker Street...")
 result = await nc.query("Where did Sherlock Holmes live?")
 print(result.answer)
 ```
-
----
-
-# 💰 Pricing
-
-Pricing is per 1M tokens (USD).
-
-| Model ID | Base URL                    | Input             | Output            |
-| -------- | --------------------------- | ----------------- | ----------------- |
-| `mk1`    | `https://api.tinyhuman.xyz` | $2.00 / 1M tokens | $6.00 / 1M tokens |
-
-OpenAI-compatible API. See [API.md](API.md) for full endpoint documentation.
-
----
-
-<div align="center">
-
-Built by [bnbpad.ai](https://bnbpad.ai)
-
-</div>
