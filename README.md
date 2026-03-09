@@ -26,11 +26,22 @@ The result: an AI memory system that can chop through over 1 billion tokens, sta
 
 ### 🎯 Core Features
 
-- **Intelligent Noise Filters**: Memories that aren't accessed naturally decay over time. Frequently recalled knowledge becomes more durable. No manual cleanup needed — the system stays lean on its own.
+#### Intelligent Noise Filters
+Memories that aren't accessed naturally decay over time. Frequently recalled knowledge becomes more durable. No manual cleanup needed — the system stays lean on its own.
 
-- **Interaction-Aware**: Not all memories are equal. Views, reactions, replies, and content creation all signal what matters. Knowledge people engage with rises to the top; ignored information fades away.
+<div align="center">
+  <img src=".github/images/gif/BobMemoryDecayVideo.gif" alt="Memory Decay Simulation" width="700"/>
+</div>
 
-- **Low Latency, Low Cost, High Quality**: There's no compromise on speed and quality when processing data with Neocortex. Everything is processed at low costs and low latency, while maintain high benchmarks.
+#### Interaction-Aware
+Not all memories are equal. Views, reactions, replies, and content creation all signal what matters. Knowledge people engage with rises to the top; ignored information fades away.
+
+<div align="center">
+  <img src=".github/images/gif/AppleEmailGraph.gif" alt="Interaction Graph" width="700"/>
+</div>
+
+#### Low Latency, Low Cost, High Quality
+There's no compromise on speed and quality when processing data with Neocortex. Everything is processed at low costs and low latency, while maintain high benchmarks.
 
 ---
 
