@@ -7,12 +7,10 @@
 
 * [Getting an API Key](getting-started/api-key.md)
 * [Choosing an SDK](getting-started/README.md)
-* [TinyHumans Python SDK](getting-started/high-level-sdk.md)
+* [Python SDK](getting-started/high-level-sdk.md)
 * [TypeScript SDK](getting-started/typescript-sdk.md)
 * [LangGraph Integration](getting-started/langgraph-sdk.md)
 * [OpenClaw Plugin](getting-started/openclaw-plugin.md)
-* [Neocortex GraphRAG (Local)](getting-started/low-level-sdk.md)
-* [Query Modes](getting-started/query-modes.md)
 
 ## Use Cases
 
