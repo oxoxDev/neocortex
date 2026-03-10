@@ -2,7 +2,7 @@
 
 <h1>Neocortex AI Memory - Your Second Brain</h1>
 
-<p><b>Human-like AI Memory&nbsp; ◦ &nbsp;10Mn+ Token Processing&nbsp; ◦ &nbsp;Upto 4000 tok/s&nbsp; ◦ &nbsp;Forgets Noise&nbsp; ◦ &nbsp;Interaction-Aware</b></p>
+<p><b>Human-like AI Memory&nbsp; ◦ &nbsp;10Mn+ Token Processing&nbsp; ◦ &nbsp;Upto 4000 tok/s&nbsp;</b></p>
 
 [![Discord](https://img.shields.io/badge/Discord-Join%20Chat-5865F2?logo=discord&logoColor=white)](https://discord.com/invite/k23Kn8nK)
 [![Reddit](https://img.shields.io/badge/Reddit-r%2Ftinyhumansai-FF4500?logo=reddit&logoColor=white)](https://www.reddit.com/r/tinyhumansai/)
@@ -26,7 +26,7 @@ The human brain is a master at compression. It doesn't try to remember every pas
 
 Inspired by how the human brain works, **Neocortex** takes a similar approach to AI memory: it **intelligently forgets noise**. Just like you don't remember every sentence you've ever read or everything happens every day in your life, Neocortex lets low-value memories naturally decay while reinforcing the knowledge that matters — the things you interact with, recall, and build upon.
 
-The result? an AI memory system that can chop through over 10 million tokens accurately at speeds of over 1000-4000 tokens/second, stays lean and focused, and gets smarter with every interaction.
+The result? an AI memory system that can chop through over 10 million tokens accurately at speeds of upto 4000 tokens/second, stays lean and focused, and gets smarter with every interaction.
 
 <!-- Neocortex ranks extremly high scores on [RAGAS](./benchmarks/01_ragas_sherlock.ipynb), [Babilong](./benchmarks/05_babilong.ipynb), [Vending Bench](./benchmarks/07_vendingbench.ipynb), [LoCoMo](./benchmarks/04_locomo.ipynb) and [HotPotQA](./benchmarks//02_hotpotqa.ipynb) -->
 
