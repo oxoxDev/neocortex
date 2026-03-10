@@ -2,7 +2,7 @@
 
 <h1>Neocortex AI Memory - Your Second Brain</h1>
 
-<p><b>Human-like AI Memory&nbsp; ◦ &nbsp;10Mn+ Token Processing&nbsp; ◦ &nbsp;Upto 4000 tok/s&nbsp;</b></p>
+<p><b>Human-like AI Memory&nbsp; ◦ &nbsp;10Mn+ Token Processing&nbsp; ◦ &nbsp;Upto 4000 tok/s&nbsp; ◦ &nbsp;0.1$/Mn tokens</b></p>
 
 [![Discord](https://img.shields.io/badge/Discord-Join%20Chat-5865F2?logo=discord&logoColor=white)](https://discord.com/invite/k23Kn8nK)
 [![Reddit](https://img.shields.io/badge/Reddit-r%2Ftinyhumansai-FF4500?logo=reddit&logoColor=white)](https://www.reddit.com/r/tinyhumansai/)
