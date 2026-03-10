@@ -2,17 +2,23 @@
 
 <h1>Neocortex AI Memory - Your Second Brain</h1>
 
-<i>NOTE: That this model is currently in closed alpha. To get access <a href="mailto:founders@tinyhumans.ai">reach out to us</a></i>
+<p><b>Human-like AI Memory&nbsp; ◦ &nbsp;10Mn+ Token Processing&nbsp; ◦ &nbsp;Upto 4000 tok/s&nbsp; ◦ &nbsp;0.1$/Mn tokens</b></p>
 
-<p><b>Human-like AI Memory&nbsp; ◦ &nbsp;1B+ Token Processing&nbsp; ◦ &nbsp;Forgets Noise&nbsp; ◦ &nbsp;Interaction-Aware</b></p>
+[![Discord](https://img.shields.io/badge/Discord-Join%20Chat-5865F2?logo=discord&logoColor=white)](https://discord.com/invite/k23Kn8nK)
+[![Reddit](https://img.shields.io/badge/Reddit-r%2Ftinyhumansai-FF4500?logo=reddit&logoColor=white)](https://www.reddit.com/r/tinyhumansai/)
+[![X](https://img.shields.io/badge/Follow-%40tinyhumansai-000000?logo=x&logoColor=white)](https://x.com/tinyhumansai)
+[![Docs](https://img.shields.io/badge/Docs-GitBook-0A80FF?logo=gitbook&logoColor=white)](https://tinyhumans.gitbook.io/neocortex/)
 
 <h4>
-  <a href="#-benchmarks">Benchmarks</a>&nbsp; • &nbsp;
+  <a href="./benchmarks/README.md">Benchmarks</a>&nbsp; • &nbsp;
   <a href="#-getting-started">Getting Started</a>&nbsp; • &nbsp;
-  <a href="BENCHMARKS.md">Full Results</a>&nbsp;
+  <a href="https://tinyhumans.gitbook.io/neocortex/">Documentation</a>&nbsp; • &nbsp;
+  <a href="https://tinyhumans.ai">Get your API key</a>&nbsp;
 </h4>
 
 </div>
+
+<i>NOTE: That this model is currently in closed alpha. To get access <a href="mailto:founders@tinyhumans.ai">reach out to us</a></i>
 
 <!-- # 🧠 Introduction to Neocortex -->
 
@@ -20,7 +26,7 @@ The human brain is a master at compression. It doesn't try to remember every pas
 
 Inspired by how the human brain works, **Neocortex** takes a similar approach to AI memory: it **intelligently forgets noise**. Just like you don't remember every sentence you've ever read or everything happens every day in your life, Neocortex lets low-value memories naturally decay while reinforcing the knowledge that matters — the things you interact with, recall, and build upon.
 
-The result? an AI memory system that can chop through over 1 billion tokens, stays lean and focused, and gets smarter with every interaction.
+The result? an AI memory system that can chop through over 10 million tokens accurately at speeds of upto 4000 tokens/second, stays lean and focused, and gets smarter with every interaction.
 
 <!-- Neocortex ranks extremly high scores on [RAGAS](./benchmarks/01_ragas_sherlock.ipynb), [Babilong](./benchmarks/05_babilong.ipynb), [Vending Bench](./benchmarks/07_vendingbench.ipynb), [LoCoMo](./benchmarks/04_locomo.ipynb) and [HotPotQA](./benchmarks//02_hotpotqa.ipynb) -->
 
@@ -85,6 +91,12 @@ An agent manages a simulated vending machine business over 30 days. Neocortex ac
 ---
 
 # ⚡ Getting Started
+
+Neocortex ships with SDKs for [Python](./packages/sdk-python), [TypeScript/JavaScript](./packages/sdk-typescript), [Go](./packages/sdk-golang), [Rust](./packages/sdk-rust), [Dart](./packages/sdk-dart), [C++](./packages/sdk-cpp), [C#](./packages/sdk-csharp), and [Java](./packages/sdk-java), plus plugins for [LangGraph](./packages/plugin-langgraph), [OpenClaw](./packages/plugin-openclaw), [ElevenLabs](./packages/plugin-elevenlabs), [CrewAI](./packages/plugin-crewai), [Raycast](./packages/plugin-raycast), [Agno](./packages/plugin-agno) [Pipecat](./packages/plugin-pipecat), [Mastra](./packages/plugin-mastra), [Autogen](./packages/plugin-autogen) and more.
+
+See [`packages/README.md`](./packages/README.md) for details about all the SDKs/Plugins available to use along with documentation and examples.
+
+Below is a simple quickstart example on getting started with Python.
 
 ### 1. Install
 
