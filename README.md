@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1>Neocortex AI Memory - Your Second Brain</h1>
+<h1>Neocortex AI Memory 🧠 - Your Second Brain</h1>
 
 <p><b>Human-like AI Memory&nbsp; ◦ &nbsp;10Mn+ Token Processing&nbsp; ◦ &nbsp;Upto 4000 tok/s&nbsp; ◦ &nbsp;0.1$/Mn tokens</b></p>
 
