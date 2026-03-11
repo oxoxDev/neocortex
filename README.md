@@ -39,6 +39,47 @@ Not all memories are equal. Views, reactions, replies, and content creation all 
 
 There's no compromise on speed and quality when processing data with Neocortex. Everything is processed at low costs and low latency, while maintain high benchmarks.
 
+# ⚡ Getting Started
+
+Neocortex ships with SDKs for [Python](./packages/sdk-python), [TypeScript/JavaScript](./packages/sdk-typescript), [Go](./packages/sdk-golang), [Rust](./packages/sdk-rust), [Dart](./packages/sdk-dart), [C++](./packages/sdk-cpp), [C#](./packages/sdk-csharp), and [Java](./packages/sdk-java), plus plugins for [LangGraph](./packages/plugin-langgraph), [OpenClaw](./packages/plugin-openclaw), [ElevenLabs](./packages/plugin-elevenlabs), [CrewAI](./packages/plugin-crewai), [Raycast](./packages/plugin-raycast), [Agno](./packages/plugin-agno) [Pipecat](./packages/plugin-pipecat), [Mastra](./packages/plugin-mastra), [Autogen](./packages/plugin-autogen) and more.
+
+See `[packages/README.md](./packages/README.md)` for details about all the SDKs/Plugins available to use along with documentation and examples.
+
+Below is a simple quickstart example on getting started with Python.
+
+```python
+# pip install tinyhumansai
+
+import tinyhumansai as api
+
+client = api.TinyHumanMemoryClient("YOUR_APIKEY_HERE")
+
+# Store a single memory
+client.ingest_memory({
+    "key": "user-preference-theme",
+    "content": "User prefers dark mode",
+    "namespace": "preferences",
+    "metadata": {"source": "onboarding"},
+})
+
+# Ask a LLM something from the memory
+response = client.recall_with_llm(
+    prompt="What is the user's preference for theme?",
+    api_key="OPENAI_API_KEY"
+)
+print(response.text) # The user prefers dark mode
+```
+
+# Demo Products
+
+Explore Neocortex in action through a set of real-time demo experiences that show how the memory layer behaves under live usage.
+
+<!-- ![Demo products screenshot](./.github/images/demo.png) -->
+
+- **Real-time chat assistant** – A conversational UI that continuously writes and recalls memories so the assistant remembers users across sessions.
+- **Live activity memory feed** – A stream of events (page views, actions, and signals) flowing into Neocortex, letting you inspect how memories are created, updated, and decayed over time.
+- **Agentic decision demo** – A simple agent that uses Neocortex to make stateful decisions over many steps, highlighting how long-horizon context is preserved.
+
 # 📈 Benchmarks
 
 ### RAGAS — Retrieval Quality (Sherlock Holmes Corpus)
@@ -60,43 +101,6 @@ An agent manages a simulated vending machine business over 30 days. Neocortex ac
 ![chart_vendingbench](.github/images/chart_vendingbench.png)
 
 ---
-
-# ⚡ Getting Started
-
-Neocortex ships with SDKs for [Python](./packages/sdk-python), [TypeScript/JavaScript](./packages/sdk-typescript), [Go](./packages/sdk-golang), [Rust](./packages/sdk-rust), [Dart](./packages/sdk-dart), [C++](./packages/sdk-cpp), [C#](./packages/sdk-csharp), and [Java](./packages/sdk-java), plus plugins for [LangGraph](./packages/plugin-langgraph), [OpenClaw](./packages/plugin-openclaw), [ElevenLabs](./packages/plugin-elevenlabs), [CrewAI](./packages/plugin-crewai), [Raycast](./packages/plugin-raycast), [Agno](./packages/plugin-agno) [Pipecat](./packages/plugin-pipecat), [Mastra](./packages/plugin-mastra), [Autogen](./packages/plugin-autogen) and more.
-
-See `[packages/README.md](./packages/README.md)` for details about all the SDKs/Plugins available to use along with documentation and examples.
-
-Below is a simple quickstart example on getting started with Python.
-
-### 1. Install
-
-```bash
-pip install tinyhumansai
-```
-
-### 2. Configure and Run
-
-```python
-import tinyhumansai as api
-
-client = api.TinyHumanMemoryClient("YOUR_APIKEY_HERE")
-
-# Store a single memory
-client.ingest_memory({
-    "key": "user-preference-theme",
-    "content": "User prefers dark mode",
-    "namespace": "preferences",
-    "metadata": {"source": "onboarding"},
-})
-
-# Ask a LLM something from the memory
-response = client.recall_with_llm(
-    prompt="What is the user's preference for theme?",
-    api_key="OPENAI_API_KEY"
-)
-print(response.text) # The user prefers dark mode
-```
 
 # Star us on Github
 
