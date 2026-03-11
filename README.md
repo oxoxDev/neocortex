@@ -102,4 +102,20 @@ print(response.text) # The user prefers dark mode
 
 _Like contributing towards AGI 🧠? Give this repo a star and spread the love ❤️_
 
-[![Star History Chart](https://api.star-history.com/image?repos=tinyhumansai/neocortex&type=date&legend=top-left)](https://www.star-history.com/?repos=tinyhumansai%2Fneocortex&type=date&legend=top-left)
+<p align="center">
+  <a href="https://www.star-history.com/#tinyhumansai/neocortex&type=date&legend=top-left">
+    <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=tinyhumansai/neocortex&type=date&theme=dark&legend=top-left" />
+     <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=tinyhumansai/neocortex&type=date&legend=top-left" />
+     <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=tinyhumansai/neocortex&type=date&legend=top-left" />
+    </picture>
+  </a>
+</p>
+
+# Contributors Hall of Fame
+
+Show some love and end up in the hall of fame
+
+<a href="https://github.com/tinyhumansai/neocortex/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=tinyhumansai/neocortex" alt="NeoCortex contributors" />
+</a>
