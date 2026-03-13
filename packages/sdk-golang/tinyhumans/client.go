@@ -16,18 +16,14 @@ import (
 type Client struct {
 	baseURL string
 	token   string
-	modelID string
 	http    *http.Client
 }
 
 // NewClient creates a new TinyHumans client.
-// token and modelID are required. baseURL is optional (uses env var or default).
-func NewClient(token, modelID string, baseURL ...string) (*Client, error) {
+// token is required. baseURL is optional (uses env var or default).
+func NewClient(token string, baseURL ...string) (*Client, error) {
 	if strings.TrimSpace(token) == "" {
 		return nil, errors.New("token is required")
-	}
-	if strings.TrimSpace(modelID) == "" {
-		return nil, errors.New("model_id is required")
 	}
 
 	resolved := ""
@@ -45,7 +41,6 @@ func NewClient(token, modelID string, baseURL ...string) (*Client, error) {
 	return &Client{
 		baseURL: resolved,
 		token:   token,
-		modelID: modelID,
 		http:    &http.Client{Timeout: 30 * time.Second},
 	}, nil
 }
@@ -92,7 +87,7 @@ func (c *Client) IngestMemories(items []MemoryItem) (*IngestMemoryResponse, erro
 			body["updatedAt"] = *item.UpdatedAt
 		}
 
-		data, err := c.send("POST", "/memory/insert", body)
+		data, err := c.send("POST", "/v1/memory/insert", body)
 		if err != nil {
 			errCount++
 			continue
@@ -128,7 +123,7 @@ func (c *Client) RecallMemory(namespace, prompt string, opts *RecallMemoryOption
 		"maxChunks": numChunks,
 	}
 
-	data, err := c.send("POST", "/memory/recall", body)
+	data, err := c.send("POST", "/v1/memory/recall", body)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +192,7 @@ func (c *Client) DeleteMemory(namespace string, opts *DeleteMemoryOptions) (*Del
 		"namespace": namespace,
 	}
 
-	data, err := c.send("POST", "/memory/admin/delete", body)
+	data, err := c.send("POST", "/v1/memory/admin/delete", body)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +251,6 @@ func (c *Client) send(method, path string, body map[string]interface{}) (map[str
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.token)
-	req.Header.Set("X-Model-Id", c.modelID)
 
 	resp, err := c.http.Do(req)
 	if err != nil {

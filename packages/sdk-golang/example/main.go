@@ -1,6 +1,6 @@
 // Example usage of the TinyHumans Go SDK.
 //
-// Set environment variables: TINYHUMANS_TOKEN, TINYHUMANS_MODEL_ID, OPENAI_API_KEY
+// Set environment variables: ALPHAHUMAN_TOKEN, OPENAI_API_KEY
 package main
 
 import (
@@ -14,8 +14,7 @@ import (
 
 func main() {
 	client, err := tinyhumans.NewClient(
-		os.Getenv("TINYHUMANS_TOKEN"),
-		os.Getenv("TINYHUMANS_MODEL_ID"),
+		os.Getenv("ALPHAHUMAN_TOKEN"),
 	)
 	if err != nil {
 		log.Fatal(err)

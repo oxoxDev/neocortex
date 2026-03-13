@@ -13,35 +13,21 @@ import (
 // --- NewClient ---
 
 func TestNewClient_EmptyToken(t *testing.T) {
-	_, err := NewClient("", "model-1")
+	_, err := NewClient("")
 	if err == nil || !strings.Contains(err.Error(), "token") {
 		t.Fatalf("expected token error, got %v", err)
 	}
 }
 
 func TestNewClient_WhitespaceToken(t *testing.T) {
-	_, err := NewClient("   ", "model-1")
+	_, err := NewClient("   ")
 	if err == nil {
 		t.Fatal("expected error for whitespace-only token")
 	}
 }
 
-func TestNewClient_EmptyModelID(t *testing.T) {
-	_, err := NewClient("tok", "")
-	if err == nil || !strings.Contains(err.Error(), "model_id") {
-		t.Fatalf("expected model_id error, got %v", err)
-	}
-}
-
-func TestNewClient_WhitespaceModelID(t *testing.T) {
-	_, err := NewClient("tok", "  ")
-	if err == nil {
-		t.Fatal("expected error for whitespace-only model_id")
-	}
-}
-
 func TestNewClient_Valid(t *testing.T) {
-	c, err := NewClient("tok", "model-1")
+	c, err := NewClient("tok")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -51,7 +37,7 @@ func TestNewClient_Valid(t *testing.T) {
 }
 
 func TestNewClient_BaseURLParam(t *testing.T) {
-	c, err := NewClient("tok", "model-1", "https://custom.api.com/")
+	c, err := NewClient("tok", "https://custom.api.com/")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -64,7 +50,7 @@ func TestNewClient_BaseURLEnvVar(t *testing.T) {
 	os.Setenv(BaseURLEnv, "https://env.api.com")
 	defer os.Unsetenv(BaseURLEnv)
 
-	c, err := NewClient("tok", "model-1")
+	c, err := NewClient("tok")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -77,7 +63,7 @@ func TestNewClient_ParamOverridesEnv(t *testing.T) {
 	os.Setenv(BaseURLEnv, "https://env.api.com")
 	defer os.Unsetenv(BaseURLEnv)
 
-	c, err := NewClient("tok", "model-1", "https://param.api.com")
+	c, err := NewClient("tok", "https://param.api.com")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -90,7 +76,7 @@ func TestNewClient_ParamOverridesEnv(t *testing.T) {
 
 func testClient(t *testing.T, server *httptest.Server) *Client {
 	t.Helper()
-	c, err := NewClient("test-token", "test-model", server.URL)
+	c, err := NewClient("test-token", server.URL)
 	if err != nil {
 		t.Fatalf("failed to create test client: %v", err)
 	}
@@ -106,14 +92,11 @@ func jsonResponse(data interface{}) string {
 
 func TestIngestMemory_Completed(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/memory/insert" {
+		if r.URL.Path != "/v1/memory/insert" {
 			t.Errorf("unexpected path: %s", r.URL.Path)
 		}
 		if r.Header.Get("Authorization") != "Bearer test-token" {
 			t.Error("missing or wrong Authorization header")
-		}
-		if r.Header.Get("X-Model-Id") != "test-model" {
-			t.Error("missing or wrong X-Model-Id header")
 		}
 
 		var body map[string]interface{}
@@ -174,7 +157,7 @@ func TestIngestMemory_ServerError(t *testing.T) {
 }
 
 func TestIngestMemories_EmptyList(t *testing.T) {
-	c, _ := NewClient("tok", "model-1")
+	c, _ := NewClient("tok")
 	_, err := c.IngestMemories([]MemoryItem{})
 	if err == nil {
 		t.Fatal("expected error for empty items")
@@ -182,7 +165,7 @@ func TestIngestMemories_EmptyList(t *testing.T) {
 }
 
 func TestIngestMemory_InvalidTimestamp(t *testing.T) {
-	c, _ := NewClient("tok", "model-1")
+	c, _ := NewClient("tok")
 	neg := -1.0
 	_, err := c.IngestMemory(MemoryItem{Key: "k", Content: "c", Namespace: "ns", CreatedAt: &neg})
 	if err == nil {
@@ -400,7 +383,7 @@ func TestRecallMemory_DefaultNumChunks(t *testing.T) {
 
 func TestDeleteMemory_WithNodesDeleted(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/memory/admin/delete" {
+		if r.URL.Path != "/v1/memory/admin/delete" {
 			t.Errorf("unexpected path: %s", r.URL.Path)
 		}
 		w.Write([]byte(jsonResponse(map[string]interface{}{"nodesDeleted": 5})))
@@ -456,7 +439,7 @@ func TestRecallWithLLM_WithContext(t *testing.T) {
 	}))
 	defer llmServer.Close()
 
-	c, _ := NewClient("tok", "model-1")
+	c, _ := NewClient("tok")
 	resp, err := c.RecallWithLLM("prompt", "api-key", RecallWithLLMOptions{
 		Context: "my context",
 		URL:     llmServer.URL,
@@ -470,7 +453,7 @@ func TestRecallWithLLM_WithContext(t *testing.T) {
 }
 
 func TestRecallWithLLM_NoContextNoNamespace(t *testing.T) {
-	c, _ := NewClient("tok", "model-1")
+	c, _ := NewClient("tok")
 	_, err := c.RecallWithLLM("prompt", "api-key", RecallWithLLMOptions{})
 	if err == nil {
 		t.Fatal("expected error when no context and no namespace")
@@ -541,7 +524,7 @@ func TestRecallWithLLM_DefaultProviderAndModel(t *testing.T) {
 	}))
 	defer llmServer.Close()
 
-	c, _ := NewClient("tok", "model-1")
+	c, _ := NewClient("tok")
 	c.RecallWithLLM("prompt", "key", RecallWithLLMOptions{
 		Context: "ctx",
 		URL:     llmServer.URL,
@@ -558,7 +541,7 @@ func TestParseResponse_NonJSON(t *testing.T) {
 		StatusCode: 200,
 		Body:       io.NopCloser(strings.NewReader("not json")),
 	}
-	c, _ := NewClient("tok", "model-1")
+	c, _ := NewClient("tok")
 	_, err := c.parseResponse(resp)
 	if err == nil {
 		t.Fatal("expected error for non-JSON response")
@@ -578,7 +561,7 @@ func TestParseResponse_Non2xx(t *testing.T) {
 		StatusCode: 403,
 		Body:       io.NopCloser(strings.NewReader(body)),
 	}
-	c, _ := NewClient("tok", "model-1")
+	c, _ := NewClient("tok")
 	_, err := c.parseResponse(resp)
 	if err == nil {
 		t.Fatal("expected error for 403 response")
@@ -601,7 +584,7 @@ func TestParseResponse_ValidResponse(t *testing.T) {
 		StatusCode: 200,
 		Body:       io.NopCloser(strings.NewReader(body)),
 	}
-	c, _ := NewClient("tok", "model-1")
+	c, _ := NewClient("tok")
 	data, err := c.parseResponse(resp)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -617,7 +600,7 @@ func TestParseResponse_NoDataField(t *testing.T) {
 		StatusCode: 200,
 		Body:       io.NopCloser(strings.NewReader(body)),
 	}
-	c, _ := NewClient("tok", "model-1")
+	c, _ := NewClient("tok")
 	data, err := c.parseResponse(resp)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
