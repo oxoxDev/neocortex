@@ -1,0 +1,180 @@
+#include "alphahuman/memory_client.hpp"
+#include "alphahuman/error.hpp"
+
+#include <curl/curl.h>
+#include <cstdlib>
+#include <mutex>
+
+namespace alphahuman {
+
+static const char* DEFAULT_BASE_URL = "https://staging-api.alphahuman.xyz";
+static const char* BASE_URL_ENV = "ALPHAHUMAN_BASE_URL";
+
+static void global_curl_init() {
+    static std::once_flag flag;
+    std::call_once(flag, [] {
+        curl_global_init(CURL_GLOBAL_DEFAULT);
+        std::atexit(curl_global_cleanup);
+    });
+}
+
+// ---- Write callback ----
+
+size_t AlphahumanMemoryClient::write_callback(char* ptr, size_t size, size_t nmemb, void* userdata) {
+    auto* buf = static_cast<std::string*>(userdata);
+    buf->append(ptr, size * nmemb);
+    return size * nmemb;
+}
+
+// ---- Constructor / Destructor ----
+
+AlphahumanMemoryClient::AlphahumanMemoryClient(const std::string& token, const std::string& base_url)
+    : token_(token) {
+    if (token.empty() || token.find_first_not_of(" \t\n\r") == std::string::npos) {
+        throw std::invalid_argument("token is required");
+    }
+
+    // Resolve base URL
+    std::string resolved = base_url;
+    if (resolved.empty()) {
+        const char* env = std::getenv(BASE_URL_ENV);
+        if (env && env[0] != '\0') {
+            resolved = env;
+        }
+    }
+    if (resolved.empty()) {
+        resolved = DEFAULT_BASE_URL;
+    }
+    // Strip trailing slashes
+    while (!resolved.empty() && resolved.back() == '/') {
+        resolved.pop_back();
+    }
+    base_url_ = resolved;
+
+    global_curl_init();
+    curl_ = curl_easy_init();
+    if (!curl_) {
+        throw std::runtime_error("failed to initialize curl");
+    }
+}
+
+AlphahumanMemoryClient::~AlphahumanMemoryClient() {
+    if (curl_) {
+        curl_easy_cleanup(static_cast<CURL*>(curl_));
+        curl_ = nullptr;
+    }
+}
+
+AlphahumanMemoryClient::AlphahumanMemoryClient(AlphahumanMemoryClient&& other) noexcept
+    : base_url_(std::move(other.base_url_)),
+      token_(std::move(other.token_)),
+      curl_(other.curl_) {
+    other.curl_ = nullptr;
+}
+
+AlphahumanMemoryClient& AlphahumanMemoryClient::operator=(AlphahumanMemoryClient&& other) noexcept {
+    if (this != &other) {
+        if (curl_) {
+            curl_easy_cleanup(static_cast<CURL*>(curl_));
+        }
+        base_url_ = std::move(other.base_url_);
+        token_ = std::move(other.token_);
+        curl_ = other.curl_;
+        other.curl_ = nullptr;
+    }
+    return *this;
+}
+
+// ---- HTTP ----
+
+json AlphahumanMemoryClient::post(const std::string& path, const json& body) {
+    auto* handle = static_cast<CURL*>(curl_);
+    std::string url = base_url_ + path;
+    std::string request_body = body.dump();
+    std::string response_body;
+
+    curl_easy_reset(handle);
+    curl_easy_setopt(handle, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(handle, CURLOPT_POST, 1L);
+    curl_easy_setopt(handle, CURLOPT_POSTFIELDS, request_body.c_str());
+    curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, static_cast<long>(request_body.size()));
+    curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_callback);
+    curl_easy_setopt(handle, CURLOPT_WRITEDATA, &response_body);
+    curl_easy_setopt(handle, CURLOPT_TIMEOUT, 30L);
+    curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 30L);
+
+    struct curl_slist* headers = nullptr;
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    std::string auth_header = "Authorization: Bearer " + token_;
+    headers = curl_slist_append(headers, auth_header.c_str());
+    curl_easy_setopt(handle, CURLOPT_HTTPHEADER, headers);
+
+    CURLcode res = curl_easy_perform(handle);
+    curl_slist_free_all(headers);
+
+    if (res != CURLE_OK) {
+        throw std::runtime_error(std::string("HTTP request failed: ") + curl_easy_strerror(res));
+    }
+
+    long http_code = 0;
+    curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &http_code);
+
+    return handle_response(http_code, response_body);
+}
+
+json AlphahumanMemoryClient::handle_response(long http_code, const std::string& response_body) {
+    json parsed;
+    try {
+        parsed = response_body.empty() ? json::object() : json::parse(response_body);
+    } catch (const json::parse_error&) {
+        throw AlphahumanError(
+            "HTTP " + std::to_string(http_code) + ": non-JSON response",
+            static_cast<int>(http_code),
+            response_body
+        );
+    }
+
+    if (http_code < 200 || http_code >= 300) {
+        std::string message = "HTTP " + std::to_string(http_code);
+        if (parsed.contains("error") && parsed["error"].is_string()) {
+            message = parsed["error"].get<std::string>();
+        }
+        throw AlphahumanError(message, static_cast<int>(http_code), response_body);
+    }
+
+    return parsed;
+}
+
+// ---- API methods ----
+
+InsertMemoryResponse AlphahumanMemoryClient::insert_memory(const InsertMemoryParams& params) {
+    json body = params.to_json();
+    json resp = post("/v1/memory/insert", body);
+    return InsertMemoryResponse::from_json(resp);
+}
+
+RecallMemoryResponse AlphahumanMemoryClient::recall_memory(const RecallMemoryParams& params) {
+    json body = params.to_json();
+    json resp = post("/v1/memory/recall", body);
+    return RecallMemoryResponse::from_json(resp);
+}
+
+DeleteMemoryResponse AlphahumanMemoryClient::delete_memory(const DeleteMemoryParams& params) {
+    json body = params.to_json();
+    json resp = post("/v1/memory/admin/delete", body);
+    return DeleteMemoryResponse::from_json(resp);
+}
+
+QueryMemoryResponse AlphahumanMemoryClient::query_memory(const QueryMemoryParams& params) {
+    json body = params.to_json();
+    json resp = post("/v1/memory/query", body);
+    return QueryMemoryResponse::from_json(resp);
+}
+
+RecallMemoriesResponse AlphahumanMemoryClient::recall_memories(const RecallMemoriesParams& params) {
+    json body = params.to_json();
+    json resp = post("/v1/memory/memories/recall", body);
+    return RecallMemoriesResponse::from_json(resp);
+}
+
+} // namespace alphahuman
