@@ -13,7 +13,6 @@ dependencies = ["httpx>=0.25"]
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-asyncio", "mypy", "ruff"]
-examples = ["python-dotenv>=1.0"]
 
 [project.scripts]
 run-act-publish = "scripts.run_act_publish:main"
