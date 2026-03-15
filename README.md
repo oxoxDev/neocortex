@@ -80,6 +80,12 @@ Explore Neocortex in action through a set of real-time demo experiences that sho
 - **Live activity memory feed** – A stream of events (page views, actions, and signals) flowing into Neocortex, letting you inspect how memories are created, updated, and decayed over time.
 - **Agentic decision demo** – A simple agent that uses Neocortex to make stateful decisions over many steps, highlighting how long-horizon context is preserved.
 
+# Usage with LLMs
+
+Provide context to your LLM by using a dedicated **context** role instead of stuffing facts into the system message. Context ingested this way doesn’t consume expensive LLM tokens, and more context doesn’t hurt accuracy.
+
+![Context and LLM: before vs after](.github/images/context-llm.png)
+
 # 📈 Benchmarks
 
 ### RAGAS — Retrieval Quality (Sherlock Holmes Corpus)
