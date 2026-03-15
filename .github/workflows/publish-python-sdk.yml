@@ -13,9 +13,6 @@ jobs:
     environment: Production
     permissions:
       id-token: write
-    defaults:
-      run:
-        working-directory: packages/sdk-python
 
     steps:
       - uses: actions/checkout@v4
@@ -26,10 +23,9 @@ jobs:
           python-version: "3.11"
 
       - name: Build package
-        run: uv build
+        run: cd packages/sdk-python && uv build
 
       - name: Publish to PyPI
-        working-directory: packages/sdk-python
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
+        run: cd packages/sdk-python && uv publish
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}

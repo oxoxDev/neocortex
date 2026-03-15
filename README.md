@@ -1,5 +1,5 @@
 <div align="center">
-<img src=".github/images/art.png" style="max-width: 400px"/>
+<img src=".github/images/graph.png" style="max-width: 400px"/>
 <h1>Neocortex AI Memory 🧠 - Your Second Brain</h1>
 
 **Human-like AI Memory  ◦  10Mn+ Token Processing  ◦  Upto 4000 tok/s  ◦  0.1$/Mn tokens**
@@ -23,7 +23,7 @@ The result? an AI memory system that can chop through over 10 million tokens acc
 
 Neocortex ranks extremely high scores on [RAGAS](https://www.ragas.io/), [Babilong](https://github.com/booydar/babilong/), [Vending Bench](https://andonlabs.com/evals/vending-bench-2), [LoCoMo](https://github.com/snap-research/locomo) and [HotPotQA](https://hotpotqa.github.io/)
 
-![graph](.github/images/graph.png)
+<!-- ![graph](.github/images/graph.png) -->
 
 # 🎯 Core Features
 
