@@ -1,8 +1,8 @@
-//! Error types for the Alphahuman Memory SDK.
+//! Error types for the TinyHumans Neocortex SDK.
 
 /// Errors returned by the SDK.
 #[derive(Debug, thiserror::Error)]
-pub enum AlphahumanError {
+pub enum TinyHumanError {
     #[error("validation error: {0}")]
     Validation(String),
 

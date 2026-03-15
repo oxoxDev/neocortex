@@ -1,4 +1,4 @@
-//! Request and response types for the Alphahuman Memory API.
+//! Request and response types for the TinyHumans Neocortex API.
 
 use serde::{Deserialize, Serialize};
 
