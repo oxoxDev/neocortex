@@ -43,7 +43,6 @@ use tinyhumansai::{
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = TinyHumanMemoryClient::new(
         TinyHumanConfig::new("your-api-key")
-            .with_base_url("https://your-backend.ngrok-free.dev"), // optional
     )?;
 
     // Insert a document
