@@ -1,11 +1,17 @@
 """Optional LLM query functionality for third-party providers."""
 
 from __future__ import annotations
-from .types import LLMQueryResponse, TinyHumanError
+
+import logging
 from typing import Any, Optional
+
 import httpx
 
+from .types import LLMQueryResponse, TinyHumanError
+
 SUPPORTED_LLM_PROVIDERS = ("openai", "anthropic", "google")
+
+logger = logging.getLogger("tinyhumansai")
 
 
 def recall_with_llm(
@@ -52,6 +58,16 @@ def recall_with_llm(
     api_key = api_key.strip()
 
     if url:
+        logger.debug(
+            "Calling recall_with_llm via custom URL provider=%s model=%s url=%s "
+            "has_context=%s max_tokens=%s temperature=%s",
+            provider,
+            model,
+            url,
+            bool(context),
+            max_tokens,
+            temperature,
+        )
         # Custom provider: use OpenAI-compatible format
         text = _query_custom(
             url=url,
@@ -63,6 +79,15 @@ def recall_with_llm(
             temperature=temperature,
         )
     else:
+        logger.debug(
+            "Calling recall_with_llm built-in provider=%s model=%s "
+            "has_context=%s max_tokens=%s temperature=%s",
+            provider,
+            model,
+            bool(context),
+            max_tokens,
+            temperature,
+        )
         # Built-in provider
         provider = provider.strip().lower()
         if provider not in SUPPORTED_LLM_PROVIDERS:
@@ -93,6 +118,7 @@ def _query_llm(
     temperature: Optional[float] = None,
 ) -> str:
     with httpx.Client(timeout=60) as http:
+        logger.debug("Dispatching LLM request provider=%s model=%s", provider, model)
         if provider == "openai":
             return _query_openai(
                 http,
@@ -145,6 +171,9 @@ def _query_openai(
         body["max_tokens"] = max_tokens
     if temperature is not None:
         body["temperature"] = temperature
+    logger.debug(
+        "Sending OpenAI chat.completions request model=%s has_context=%s", model, bool(context)
+    )
     r = http.post(
         "https://api.openai.com/v1/chat/completions",
         headers={
@@ -177,6 +206,9 @@ def _query_anthropic(
         body["system"] = context
     if temperature is not None:
         body["temperature"] = temperature
+    logger.debug(
+        "Sending Anthropic messages request model=%s has_context=%s", model, bool(context)
+    )
     r = http.post(
         "https://api.anthropic.com/v1/messages",
         headers={
@@ -211,6 +243,9 @@ def _query_google(
             body["generationConfig"]["maxOutputTokens"] = max_tokens
         if temperature is not None:
             body["generationConfig"]["temperature"] = temperature
+    logger.debug(
+        "Sending Google generateContent request model=%s has_context=%s", model, bool(context)
+    )
     r = http.post(
         f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}",
         headers={"Content-Type": "application/json"},
@@ -243,6 +278,12 @@ def _query_custom(
         body["temperature"] = temperature
 
     with httpx.Client(timeout=60) as http:
+        logger.debug(
+            "Sending custom LLM request url=%s model=%s has_context=%s",
+            url,
+            model,
+            bool(context),
+        )
         r = http.post(
             url,
             headers={

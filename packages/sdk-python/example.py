@@ -18,7 +18,7 @@ client = api.TinyHumanMemoryClient(os.environ["TINYHUMANS_TOKEN"])
 
 # Ingest (upsert) a single memory
 result = client.ingest_memory(
-    {
+    item={
         "key": "user-preference-theme",
         "content": "User prefers dark mode",
         "namespace": "preferences",
@@ -42,11 +42,11 @@ print(ctx.context)
 # (Optional) Query LLM with context (use your own API key from the provider)
 # Built-in providers: "openai", "anthropic", "google"
 response = client.recall_with_llm(
-    "What is the user's preference for theme?",
-    "openai",
-    "gpt-4o-mini",
-    os.environ["OPENAI_API_KEY"],
-    ctx.context,
+    prompt="What is the user's preference for theme?",
+    provider="openai",
+    model="gpt-4o-mini",
+    api_key=os.environ["OPENAI_API_KEY"],
+    context=ctx.context,
 )
 print(response.text)
 

@@ -8,9 +8,6 @@ from typing import Any, Optional
 
 DEFAULT_BASE_URL = "https://api.tinyhumans.ai"
 
-# Environment variable for base URL override (e.g. from .env)
-BASE_URL_ENV = "TINYHUMANS_BASE_URL"
-
 
 @dataclass
 class TinyHumanConfig:

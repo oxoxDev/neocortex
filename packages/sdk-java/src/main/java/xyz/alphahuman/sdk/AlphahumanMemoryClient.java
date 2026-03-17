@@ -17,7 +17,7 @@ import java.util.Map;
 public class AlphahumanMemoryClient implements AutoCloseable {
 
     private static final String DEFAULT_BASE_URL = "https://staging-api.alphahuman.xyz";
-    private static final String BASE_URL_ENV = "ALPHAHUMAN_BASE_URL";
+    private static final String TINYHUMANS_BASE_URL = "ALPHAHUMAN_BASE_URL";
 
     private final String baseUrl;
     private final String token;
@@ -35,7 +35,7 @@ public class AlphahumanMemoryClient implements AutoCloseable {
 
         String resolved = baseUrl;
         if (resolved == null || resolved.isEmpty()) {
-            resolved = System.getenv(BASE_URL_ENV);
+            resolved = System.getenv(TINYHUMANS_BASE_URL);
         }
         if (resolved == null || resolved.isEmpty()) {
             resolved = DEFAULT_BASE_URL;

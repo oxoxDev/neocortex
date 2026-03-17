@@ -11,7 +11,7 @@ __all__ = ["NeocortexLiveKitTools", "AlphahumanError"]
 
 
 DEFAULT_BASE_URL = "https://staging-api.alphahuman.xyz"
-BASE_URL_ENV = "ALPHAHUMAN_BASE_URL"
+TINYHUMANS_BASE_URL = "ALPHAHUMAN_BASE_URL"
 
 
 class AlphahumanError(Exception):
@@ -29,7 +29,7 @@ class AlphahumanMemoryClient:
     def __init__(self, token: str, base_url: Optional[str] = None) -> None:
         if not token or not token.strip():
             raise ValueError("token is required")
-        resolved = base_url or os.getenv(BASE_URL_ENV) or DEFAULT_BASE_URL
+        resolved = base_url or os.getenv(TINYHUMANS_BASE_URL) or DEFAULT_BASE_URL
         self._base_url = resolved.rstrip("/")
         self._token = token
         self._http = httpx.Client(

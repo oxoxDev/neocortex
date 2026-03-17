@@ -8,7 +8,7 @@
 namespace alphahuman {
 
 static const char* DEFAULT_BASE_URL = "https://staging-api.alphahuman.xyz";
-static const char* BASE_URL_ENV = "ALPHAHUMAN_BASE_URL";
+static const char* TINYHUMANS_BASE_URL = "ALPHAHUMAN_BASE_URL";
 
 static void global_curl_init() {
     static std::once_flag flag;
@@ -37,7 +37,7 @@ AlphahumanMemoryClient::AlphahumanMemoryClient(const std::string& token, const s
     // Resolve base URL
     std::string resolved = base_url;
     if (resolved.empty()) {
-        const char* env = std::getenv(BASE_URL_ENV);
+        const char* env = std::getenv(TINYHUMANS_BASE_URL);
         if (env && env[0] != '\0') {
             resolved = env;
         }

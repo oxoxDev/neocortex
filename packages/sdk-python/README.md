@@ -40,17 +40,25 @@ import tinyhumansai as api
 client = api.TinyHumanMemoryClient("YOUR_APIKEY_HERE")
 
 # Store a single memory
-client.ingest_memory({
-    "key": "user-preference-theme",
-    "content": "User prefers dark mode",
-    "namespace": "preferences",
-    "metadata": {"source": "onboarding"},
-})
+client.ingest_memory(
+    item={
+        "key": "user-preference-theme",
+        "content": "User prefers dark mode",
+        "namespace": "preferences",
+        "metadata": {"source": "onboarding"},
+    }
+)
 
-# Ask a LLM something from the memory
+# Fetch relevant memory context, then ask a LLM something from it
+ctx = client.recall_memory(
+    namespace="preferences",
+    prompt="What is the user's preference for theme?",
+)
+
 response = client.recall_with_llm(
     prompt="What is the user's preference for theme?",
-    api_key="OPENAI_API_KEY"
+    api_key="OPENAI_API_KEY",
+    context=ctx.context,
 )
 print(response.text) # The user prefers dark mode
 ```

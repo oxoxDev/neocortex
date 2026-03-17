@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import time
 from typing import Any, Optional, Sequence, Union
@@ -11,7 +12,6 @@ import httpx
 from .llm import recall_with_llm as _query_llm_func
 from .types import (
     TinyHumanError,
-    BASE_URL_ENV,
     DEFAULT_BASE_URL,
     DeleteMemoryResponse,
     GetContextResponse,
@@ -20,6 +20,9 @@ from .types import (
     MemoryItem,
     ReadMemoryItem,
 )
+
+
+logger = logging.getLogger("tinyhumansai")
 
 
 def _validate_timestamp(value: Optional[float], name: str) -> None:
@@ -90,10 +93,17 @@ class TinyHumanMemoryClient:
             raise ValueError("token is required")
         if not model_id or not model_id.strip():
             raise ValueError("model_id is required")
-        resolved_base_url = base_url or os.environ.get(BASE_URL_ENV) or DEFAULT_BASE_URL
+        resolved_base_url = (
+            base_url or os.environ.get("TINYHUMANS_BASE_URL") or DEFAULT_BASE_URL
+        )
         self._base_url = resolved_base_url.rstrip("/")
         self._token = token
         self._model_id = model_id
+        logger.debug(
+            "Initializing TinyHumanMemoryClient base_url=%s model_id=%s",
+            self._base_url,
+            self._model_id,
+        )
         self._http = httpx.Client(
             base_url=self._base_url,
             headers={
@@ -105,6 +115,7 @@ class TinyHumanMemoryClient:
 
     def close(self) -> None:
         """Close the underlying HTTP client and release connections."""
+        logger.debug("Closing TinyHumanMemoryClient HTTP session")
         self._http.close()
 
     def __enter__(self) -> "TinyHumanMemoryClient":
@@ -164,6 +175,7 @@ class TinyHumanMemoryClient:
             raise ValueError("items must be a non-empty list")
 
         normalized: list[dict[str, Any]] = []
+        logger.debug("Normalizing %d memory item(s) for ingest", len(items))
         for item in items:
             if isinstance(item, MemoryItem):
                 _validate_timestamps(item.created_at, item.updated_at)
@@ -199,6 +211,11 @@ class TinyHumanMemoryClient:
                 raise TypeError("items must be MemoryItem or dict")
 
         body = {"items": normalized}
+        logger.debug(
+            "Sending ingest_memories request namespace(s)=%s count=%d",
+            {i["namespace"] for i in normalized},
+            len(normalized),
+        )
         data = self._send("POST", "/memory", body)
         return IngestMemoryResponse(
             ingested=data["ingested"],
@@ -247,6 +264,14 @@ class TinyHumanMemoryClient:
             for k in keys:
                 params.append(("keys[]", k))
 
+        logger.debug(
+            "Recalling memory namespace=%s prompt=%s num_chunks=%d key=%s keys_count=%s",
+            namespace,
+            (prompt[:100] + "…") if len(prompt) > 100 else prompt,
+            num_chunks,
+            key,
+            len(keys) if keys else 0,
+        )
         data = self._get("/memory", params)
         items = [
             ReadMemoryItem(
@@ -305,6 +330,13 @@ class TinyHumanMemoryClient:
         if delete_all:
             body["deleteAll"] = True
 
+        logger.debug(
+            "Deleting memory namespace=%s key=%s keys_count=%s delete_all=%s",
+            namespace,
+            key,
+            len(keys) if keys else 0,
+            delete_all,
+        )
         data = self._send("DELETE", "/memory", body)
         return DeleteMemoryResponse(deleted=data["deleted"])
 
@@ -369,6 +401,17 @@ class TinyHumanMemoryClient:
                 num_chunks=num_chunks,
             )
             context = ctx.context
+        logger.debug(
+            "Calling recall_with_llm provider=%s model=%s namespace=%s "
+            "has_context=%s max_tokens=%s temperature=%s url=%s",
+            provider,
+            model,
+            namespace,
+            bool(context),
+            max_tokens,
+            temperature,
+            url,
+        )
         return _query_llm_func(
             prompt=prompt,
             provider=provider,
@@ -385,14 +428,19 @@ class TinyHumanMemoryClient:
     # ------------------------------------------------------------------
 
     def _get(self, path: str, params: list[tuple[str, str]]) -> dict[str, Any]:
+        logger.debug("HTTP GET %s params=%s", path, params)
         response = self._http.get(path, params=params)
         return self._parse_response(response)
 
     def _send(self, method: str, path: str, body: dict[str, Any]) -> dict[str, Any]:
+        logger.debug("HTTP %s %s json_keys=%s", method, path, list(body.keys()))
         response = self._http.request(method, path, json=body)
         return self._parse_response(response)
 
     def _parse_response(self, response: httpx.Response) -> dict[str, Any]:
+        logger.debug(
+            "Parsing response status=%s url=%s", response.status_code, response.url
+        )
         try:
             payload = response.json()
         except Exception:
