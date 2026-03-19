@@ -3,16 +3,20 @@ Example usage of the TinyHumans SDK.
 
 Install with examples extra for dotenv: pip install -e ".[examples]"
 Copy .env.example to .env and set TINYHUMANS_TOKEN, TINYHUMANS_MODEL_ID, OPENAI_API_KEY.
+Optional: set TINYHUMANSAI_LOG_LEVEL=DEBUG to print outbound API requests.
 """
 
+import logging
 import os
 import time
 
 from dotenv import load_dotenv
 
-import tinyhumansai as api
-
 load_dotenv()
+if os.environ.get("TINYHUMANSAI_LOG_LEVEL") and not logging.getLogger().handlers:
+    logging.basicConfig(level=logging.INFO)
+
+import tinyhumansai as api
 
 client = api.TinyHumanMemoryClient(os.environ["TINYHUMANS_TOKEN"])
 
@@ -60,8 +64,6 @@ print(response.text)
 #     context=ctx.context,
 # )
 
-# Delete by key
-client.delete_memory(namespace="preferences", key="user-preference-theme")
-
 # Delete all memory in namespace
+# The current API exposes namespace-wide delete, not key-scoped delete.
 client.delete_memory(namespace="preferences", delete_all=True)

@@ -7,6 +7,7 @@ from typing import Any, Optional
 
 
 DEFAULT_BASE_URL = "https://api.tinyhumans.ai"
+BASE_URL_ENV = "TINYHUMANS_BASE_URL"
 
 
 @dataclass
@@ -28,7 +29,7 @@ class MemoryItem:
     """A single memory item to ingest."""
 
     key: str
-    """Unique key within the namespace (used for upsert / dedup)."""
+    """Unique key within the namespace (mapped to title/documentId in the HTTP API)."""
 
     content: str
     """Memory content text."""

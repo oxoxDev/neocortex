@@ -11,6 +11,7 @@ import httpx
 
 from .llm import recall_with_llm as _query_llm_func
 from .types import (
+    BASE_URL_ENV,
     TinyHumanError,
     DEFAULT_BASE_URL,
     DeleteMemoryResponse,
@@ -23,6 +24,10 @@ from .types import (
 
 
 logger = logging.getLogger("tinyhumansai")
+
+INSERT_PATH = "/v1/memory/insert"
+QUERY_PATH = "/v1/memory/query"
+DELETE_PATH = "/v1/memory/admin/delete"
 
 
 def _validate_timestamp(value: Optional[float], name: str) -> None:
@@ -94,7 +99,7 @@ class TinyHumanMemoryClient:
         if not model_id or not model_id.strip():
             raise ValueError("model_id is required")
         resolved_base_url = (
-            base_url or os.environ.get("TINYHUMANS_BASE_URL") or DEFAULT_BASE_URL
+            base_url or os.environ.get(BASE_URL_ENV) or DEFAULT_BASE_URL
         )
         self._base_url = resolved_base_url.rstrip("/")
         self._token = token
@@ -209,19 +214,22 @@ class TinyHumanMemoryClient:
                 normalized.append(item_dict)
             else:
                 raise TypeError("items must be MemoryItem or dict")
-
-        body = {"items": normalized}
-        logger.debug(
-            "Sending ingest_memories request namespace(s)=%s count=%d",
-            {i["namespace"] for i in normalized},
-            len(normalized),
-        )
-        data = self._send("POST", "/memory", body)
-        return IngestMemoryResponse(
-            ingested=data["ingested"],
-            updated=data["updated"],
-            errors=data["errors"],
-        )
+        ingested = 0
+        updated = 0
+        for item_dict in normalized:
+            body = self._build_insert_body(item_dict)
+            logger.debug(
+                "Sending ingest request namespace=%s key=%s",
+                item_dict["namespace"],
+                item_dict["key"],
+            )
+            data = self._send("POST", INSERT_PATH, body)
+            status = str(data.get("status", "")).lower()
+            if "updat" in status:
+                updated += 1
+            else:
+                ingested += 1
+        return IngestMemoryResponse(ingested=ingested, updated=updated, errors=0)
 
     def recall_memory(
         self,
@@ -253,17 +261,6 @@ class TinyHumanMemoryClient:
         """
         if num_chunks < 1:
             raise ValueError("num_chunks must be >= 1")
-        params: list[tuple[str, str]] = [
-            ("namespace", namespace),
-            ("prompt", prompt),
-            ("limit", str(num_chunks)),
-        ]
-        if key:
-            params.append(("key", key))
-        if keys:
-            for k in keys:
-                params.append(("keys[]", k))
-
         logger.debug(
             "Recalling memory namespace=%s prompt=%s num_chunks=%d key=%s keys_count=%s",
             namespace,
@@ -272,26 +269,19 @@ class TinyHumanMemoryClient:
             key,
             len(keys) if keys else 0,
         )
-        data = self._get("/memory", params)
-        items = [
-            ReadMemoryItem(
-                key=item["key"],
-                content=item["content"],
-                namespace=item["namespace"],
-                metadata=item.get("metadata", {}),
-                created_at=item.get("createdAt", ""),
-                updated_at=item.get("updatedAt", ""),
-            )
-            for item in data["items"]
-        ]
-        items = items[:num_chunks]
+        body: dict[str, Any] = {
+            "query": prompt,
+            "namespace": namespace,
+            "maxChunks": num_chunks,
+        }
+        if key:
+            body["documentIds"] = [key]
+        elif keys:
+            body["documentIds"] = list(keys)
 
-        context_parts: list[str] = []
-        for it in items:
-            header = f"[{it.namespace}:{it.key}]"
-            context_parts.append(f"{header}\n{it.content}")
-        context = "\n\n".join(context_parts)
-
+        data = self._send("POST", QUERY_PATH, body)
+        items = self._extract_read_items(data, namespace)
+        context = self._extract_context_string(data, items)
         return GetContextResponse(context=context, items=items, count=len(items))
 
     def delete_memory(
@@ -319,16 +309,15 @@ class TinyHumanMemoryClient:
         """
         has_key = isinstance(key, str) and len(key) > 0
         has_keys = isinstance(keys, (list, tuple)) and len(keys) > 0
-        if not has_key and not has_keys and not delete_all:
-            raise ValueError('Provide "key", "keys", or set delete_all=True')
+        if has_key or has_keys:
+            raise ValueError(
+                "The current TinyHumans API only supports namespace-wide deletion. "
+                "Pass delete_all=True to delete the namespace."
+            )
+        if not delete_all:
+            raise ValueError('Set delete_all=True to confirm namespace deletion')
 
         body: dict[str, Any] = {"namespace": namespace}
-        if key is not None:
-            body["key"] = key
-        if keys is not None:
-            body["keys"] = list(keys)
-        if delete_all:
-            body["deleteAll"] = True
 
         logger.debug(
             "Deleting memory namespace=%s key=%s keys_count=%s delete_all=%s",
@@ -337,8 +326,8 @@ class TinyHumanMemoryClient:
             len(keys) if keys else 0,
             delete_all,
         )
-        data = self._send("DELETE", "/memory", body)
-        return DeleteMemoryResponse(deleted=data["deleted"])
+        data = self._send("POST", DELETE_PATH, body)
+        return DeleteMemoryResponse(deleted=int(data.get("nodesDeleted", 0)))
 
     def recall_with_llm(
         self,
@@ -427,27 +416,141 @@ class TinyHumanMemoryClient:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _get(self, path: str, params: list[tuple[str, str]]) -> dict[str, Any]:
-        logger.debug("HTTP GET %s params=%s", path, params)
-        response = self._http.get(path, params=params)
+    def _send(self, method: str, path: str, body: dict[str, Any]) -> dict[str, Any]:
+        request = self._http.build_request(method, path, json=body)
+        logger.debug(
+            "HTTP %s %s headers=%s json=%s",
+            method,
+            request.url,
+            self._debug_headers(),
+            body,
+        )
+        response = self._http.send(request)
         return self._parse_response(response)
 
-    def _send(self, method: str, path: str, body: dict[str, Any]) -> dict[str, Any]:
-        logger.debug("HTTP %s %s json_keys=%s", method, path, list(body.keys()))
-        response = self._http.request(method, path, json=body)
-        return self._parse_response(response)
+    def _build_insert_body(self, item: dict[str, Any]) -> dict[str, Any]:
+        body: dict[str, Any] = {
+            "title": item["key"],
+            "content": item["content"],
+            "namespace": item["namespace"],
+            "documentId": item["key"],
+        }
+        if item.get("metadata"):
+            body["metadata"] = item["metadata"]
+        if item.get("createdAt") is not None:
+            body["createdAt"] = item["createdAt"]
+        if item.get("updatedAt") is not None:
+            body["updatedAt"] = item["updatedAt"]
+        return body
+
+    def _extract_read_items(
+        self, data: dict[str, Any], namespace: str
+    ) -> list[ReadMemoryItem]:
+        context = data.get("context")
+        if not isinstance(context, dict):
+            return []
+
+        chunks = context.get("chunks")
+        if not isinstance(chunks, list):
+            return []
+
+        items: list[ReadMemoryItem] = []
+        for chunk in chunks:
+            if not isinstance(chunk, dict):
+                continue
+            content = self._first_str(
+                chunk,
+                "content",
+                "text",
+                "chunkText",
+                "body",
+            )
+            key = self._first_str(
+                chunk,
+                "documentId",
+                "title",
+                "id",
+                default="",
+            )
+            item_namespace = self._first_str(
+                chunk,
+                "namespace",
+                default=namespace,
+            )
+            metadata = {
+                k: v
+                for k, v in chunk.items()
+                if k
+                not in {
+                    "content",
+                    "text",
+                    "chunkText",
+                    "body",
+                    "documentId",
+                    "title",
+                    "id",
+                    "namespace",
+                    "createdAt",
+                    "updatedAt",
+                }
+            }
+            items.append(
+                ReadMemoryItem(
+                    key=key,
+                    content=content,
+                    namespace=item_namespace,
+                    metadata=metadata,
+                    created_at=str(chunk.get("createdAt", "")),
+                    updated_at=str(chunk.get("updatedAt", "")),
+                )
+            )
+        return items
+
+    def _extract_context_string(
+        self, data: dict[str, Any], items: Sequence[ReadMemoryItem]
+    ) -> str:
+        llm_context = data.get("llmContextMessage")
+        if isinstance(llm_context, str) and llm_context.strip():
+            return llm_context
+
+        context_parts: list[str] = []
+        for item in items:
+            header = f"[{item.namespace}:{item.key}]" if item.key else f"[{item.namespace}]"
+            if item.content:
+                context_parts.append(f"{header}\n{item.content}")
+        return "\n\n".join(context_parts)
+
+    def _debug_headers(self) -> dict[str, str]:
+        return {
+            "Authorization": "Bearer ***",
+            "X-Model-Id": self._model_id,
+            "Content-Type": "application/json",
+        }
+
+    def _first_str(
+        self, payload: dict[str, Any], *keys: str, default: str = ""
+    ) -> str:
+        for key in keys:
+            value = payload.get(key)
+            if isinstance(value, str) and value:
+                return value
+        return default
 
     def _parse_response(self, response: httpx.Response) -> dict[str, Any]:
+        response_text = response.text
         logger.debug(
-            "Parsing response status=%s url=%s", response.status_code, response.url
+            "HTTP response status=%s url=%s body=%s",
+            response.status_code,
+            response.url,
+            response_text[:500].replace("\n", " "),
         )
         try:
             payload = response.json()
         except Exception:
             raise TinyHumanError(
-                f"HTTP {response.status_code}: non-JSON response",
+                f"HTTP {response.status_code} {response.request.method} {response.url}: non-JSON response",
                 response.status_code,
-                response.text,
+                response_text,
             )
         if not response.is_success:
             message = payload.get("error", f"HTTP {response.status_code}")
