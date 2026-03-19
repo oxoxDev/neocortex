@@ -16,4 +16,10 @@ else
   echo "tectonic found: $(command -v tectonic)"
 fi
 
+if ! command -v pandoc >/dev/null 2>&1; then
+  echo "pandoc is not installed. Install with: brew install pandoc"
+else
+  echo "pandoc found: $(command -v pandoc)"
+fi
+
 echo "Paper workspace initialized at: $ROOT_DIR"

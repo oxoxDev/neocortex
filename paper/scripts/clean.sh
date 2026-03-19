@@ -10,5 +10,6 @@ fi
 
 rm -f out/arxiv-source.tar.gz
 rm -f out/main.pdf out/main.aux out/main.bbl out/main.blg out/main.log out/main.out
+rm -f out/main.html out/main.md
 
 echo "Clean complete."
