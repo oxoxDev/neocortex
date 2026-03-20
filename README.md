@@ -4,10 +4,7 @@
 
 **Human-like AI Memory  ◦  10Mn+ Token Context ◦ 0.2$/Mn tokens** ◦ **Conscious Recall**
 
-[Discord](https://discord.com/invite/k23Kn8nK)
-[Reddit](https://www.reddit.com/r/tinyhumansai/)
-[X](https://x.com/tinyhumansai)
-[Docs](https://tinyhumans.gitbook.io/neocortex/)
+[Discord](https://discord.com/invite/k23Kn8nK) • [Reddit](https://www.reddit.com/r/tinyhumansai/) • [X](https://x.com/tinyhumansai) • [Docs](https://tinyhumans.gitbook.io/neocortex/)
 
 #### [Benchmarks](./benchmarks/README.md)  •   [Getting Started](#-getting-started)  •   [Documentation](https://tinyhumans.gitbook.io/neocortex/)  •   [Get your API key](https://tinyhumans.ai) 
 
