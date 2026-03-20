@@ -189,3 +189,196 @@ response = client.recall_with_llm(
 )
 print(response.text)
 ```
+
+### `insert_document`
+
+Ingest a single memory document. Sends `POST /v1/memory/documents`.
+
+```python
+client.insert_document(
+    title="Doc title",
+    content="Doc content",
+    namespace="documents",
+    source_type="doc",  # optional
+    metadata={"source": "example"},  # optional
+    document_id="optional-document-id",  # optional
+)
+```
+
+### `insert_documents_batch`
+
+Ingest multiple documents in one call. Sends `POST /v1/memory/documents/batch`.
+
+```python
+client.insert_documents_batch(
+    items=[
+        {
+            "title": "Doc A",
+            "content": "Content A",
+            "namespace": "documents",
+            "documentId": "doc-a-id",  # optional
+        },
+        {
+            "title": "Doc B",
+            "content": "Content B",
+            "namespace": "documents",
+            "documentId": "doc-b-id",  # optional
+        },
+    ]
+)
+```
+
+### `list_documents`
+
+List ingested documents. Sends `GET /v1/memory/documents`.
+
+```python
+client.list_documents(namespace="documents", limit=10, offset=0)
+```
+
+### `get_document`
+
+Get document details. Sends `GET /v1/memory/documents/:documentId`.
+
+```python
+client.get_document(document_id="doc-a-id", namespace="documents")
+```
+
+### `delete_document`
+
+Delete a document. Sends `DELETE /v1/memory/documents/:documentId`.
+
+```python
+client.delete_document(document_id="doc-a-id", namespace="documents")
+```
+
+### `query_memory_context`
+
+Query memory context via the mirrored endpoint. Sends `POST /v1/memory/queries`.
+
+```python
+client.query_memory_context(
+    query="What did we store?",
+    namespace="documents",
+    include_references=True,
+    max_chunks=5,
+    document_ids=["doc-a-id"],  # optional
+)
+```
+
+### `chat_memory_context`
+
+Chat with memory context. Sends `POST /v1/memory/conversations`.
+
+```python
+client.chat_memory_context(
+    messages=[{"role": "user", "content": "Summarize the stored docs"}],
+    temperature=0,
+    max_tokens=256,
+)
+```
+
+### `record_interactions`
+
+Record interaction signals. Sends `POST /v1/memory/interactions`.
+
+```python
+client.record_interactions(
+    namespace="documents",
+    entity_names=["ENTITY-A", "ENTITY-B"],
+    description="Recorded via sdk-python example",
+    interaction_level="engage",
+)
+```
+
+### `recall_thoughts`
+
+Generate reflective thoughts. Sends `POST /v1/memory/memories/thoughts`.
+
+```python
+client.recall_thoughts(namespace="documents", max_chunks=5)
+```
+
+### `sync_memory` (optional / backend-specific)
+
+Sync OpenClaw memory files. Sends `POST /v1/memory/sync`.
+
+```python
+client.sync_memory(
+    workspace_id="workspace-id",
+    agent_id="agent-id",
+    source="startup",  # optional
+    files=[
+        {
+            "file_path": "example.txt",
+            "content": "file contents",
+            "timestamp": "1700000000",
+            "hash": "sha256-hex",
+        }
+    ],
+)
+```
+
+### `chat_memory`
+
+Chat with DeltaNet memory cache. Sends `POST /v1/memory/chat`.
+
+```python
+client.chat_memory(
+    messages=[{"role": "user", "content": "Hello"}],
+    temperature=0.2,
+    max_tokens=256,
+)
+```
+
+### `interact_memory`
+
+Record entity interactions in the core backend. Sends `POST /v1/memory/interact`.
+
+```python
+client.interact_memory(
+    namespace="documents",
+    entity_names=["ENTITY-A", "ENTITY-B"],
+    description="Recorded by sdk-python example",
+    interaction_level="engage",
+)
+```
+
+### `recall_memory_master`
+
+Recall context from the Master node. Sends `POST /v1/memory/recall`.
+
+Note: this is different from `recall_memory(...)` which uses the RAG query endpoint (`POST /v1/memory/query`).
+
+```python
+ctx = client.recall_memory_master(namespace="documents", max_chunks=5)
+print(ctx.context)
+```
+
+### `recall_memories`
+
+Recall memories from the Ebbinghaus bank. Sends `POST /v1/memory/memories/recall`.
+
+```python
+client.recall_memories(
+    namespace="documents",
+    top_k=5,
+    min_retention=0,
+)
+```
+
+### `get_graph_snapshot` (optional / backend-specific)
+
+Fetch graph topology snapshot. Sends `GET /v1/memory/admin/graph-snapshot`.
+
+```python
+client.get_graph_snapshot(namespace="documents", mode="latest_chunks", limit=10, seed_limit=3)
+```
+
+### `get_ingestion_job` (optional)
+
+Get ingestion job status. Sends `GET /v1/memory/ingestion/jobs/:jobId`.
+
+```python
+client.get_ingestion_job(job_id="some-job-id")
+```

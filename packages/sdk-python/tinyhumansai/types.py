@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any, Optional
 
 
-DEFAULT_BASE_URL = "https://api.tinyhumans.ai"
+DEFAULT_BASE_URL = "https://staging-api.alphahuman.xyz"
 BASE_URL_ENV = "TINYHUMANS_BASE_URL"
 
 

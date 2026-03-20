@@ -6,6 +6,7 @@ import logging
 import os
 import time
 from typing import Any, Optional, Sequence, Union
+from urllib.parse import quote
 
 import httpx
 
@@ -28,6 +29,23 @@ logger = logging.getLogger("tinyhumansai")
 INSERT_PATH = "/v1/memory/insert"
 QUERY_PATH = "/v1/memory/query"
 DELETE_PATH = "/v1/memory/admin/delete"
+
+# --- Newer endpoints (documents, mirrored context, admin graph, etc.) ---
+SYNC_PATH = "/v1/memory/sync"
+CHAT_PATH = "/v1/memory/chat"
+INTERACT_PATH = "/v1/memory/interact"
+RECALL_MASTER_PATH = "/v1/memory/recall"
+RECALL_MEMORIES_PATH = "/v1/memory/memories/recall"
+
+DOCUMENTS_INSERT_PATH = "/v1/memory/documents"
+DOCUMENTS_BATCH_PATH = "/v1/memory/documents/batch"
+DOCUMENTS_LIST_PATH = "/v1/memory/documents"
+DOCUMENTS_GRAPH_SNAPSHOT_PATH = "/v1/memory/admin/graph-snapshot"
+MEMORY_QUERIES_PATH = "/v1/memory/queries"
+MEMORY_CONVERSATIONS_PATH = "/v1/memory/conversations"
+MEMORY_INTERACTIONS_PATH = "/v1/memory/interactions"
+MEMORY_THOUGHTS_PATH = "/v1/memory/memories/thoughts"
+INGESTION_JOB_PATH_PREFIX = "/v1/memory/ingestion/jobs"
 
 
 def _validate_timestamp(value: Optional[float], name: str) -> None:
@@ -412,6 +430,465 @@ class TinyHumanMemoryClient:
             url=url,
         )
 
+    def sync_memory(
+        self,
+        *,
+        workspace_id: str,
+        agent_id: str,
+        files: Sequence[dict[str, Any]],
+        source: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Sync OpenClaw memory files (TS: syncMemory).
+
+        Sends POST /v1/memory/sync.
+        """
+        if not workspace_id or not isinstance(workspace_id, str):
+            raise ValueError("workspace_id is required and must be a string")
+        if not agent_id or not isinstance(agent_id, str):
+            raise ValueError("agent_id is required and must be a string")
+        if not files or not isinstance(files, (list, tuple)):
+            raise ValueError("files must be a non-empty list of file objects")
+
+        normalized_files: list[dict[str, Any]] = []
+        for f in files:
+            file_path = f.get("filePath", f.get("file_path"))
+            content = f.get("content")
+            timestamp = f.get("timestamp")
+            hash_value = f.get("hash")
+
+            if not file_path or not isinstance(file_path, str):
+                raise ValueError("each file requires filePath/file_path (string)")
+            if not content or not isinstance(content, str):
+                raise ValueError("each file requires content (string)")
+            if timestamp is None or not isinstance(timestamp, (str, int, float)):
+                raise ValueError("each file requires timestamp (string|number)")
+            if not hash_value or not isinstance(hash_value, str):
+                raise ValueError("each file requires hash (string)")
+
+            normalized_files.append(
+                {
+                    "filePath": file_path,
+                    "content": content,
+                    # backend expects string-ish timestamps; keep original type if str,
+                    # otherwise stringify numeric timestamps.
+                    "timestamp": timestamp if isinstance(timestamp, str) else str(timestamp),
+                    "hash": hash_value,
+                }
+            )
+
+        body: dict[str, Any] = {
+            "workspaceId": workspace_id,
+            "agentId": agent_id,
+            "files": normalized_files,
+        }
+        if source is not None:
+            body["source"] = source
+
+        return self._send("POST", SYNC_PATH, body)
+
+    def chat_memory(
+        self,
+        *,
+        messages: Sequence[dict[str, Any]],
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ) -> dict[str, Any]:
+        """Chat with memory context (TS: chatMemory).
+
+        Sends POST /v1/memory/chat.
+        """
+        if not messages or not isinstance(messages, (list, tuple)):
+            raise ValueError("messages must be a non-empty list of {role, content} dicts")
+        for m in messages:
+            if not isinstance(m, dict):
+                raise ValueError("messages must be dictionaries")
+            if not isinstance(m.get("role"), str) or not m.get("role"):
+                raise ValueError("each message requires role (string)")
+            if not isinstance(m.get("content"), str) or not m.get("content"):
+                raise ValueError("each message requires content (string)")
+
+        body: dict[str, Any] = {"messages": list(messages)}
+        if temperature is not None:
+            body["temperature"] = temperature
+        if max_tokens is not None:
+            body["maxTokens"] = max_tokens
+
+        return self._send("POST", CHAT_PATH, body)
+
+    def interact_memory(
+        self,
+        *,
+        namespace: str,
+        entity_names: Sequence[str],
+        description: Optional[str] = None,
+        interaction_level: Optional[str] = None,
+        interaction_levels: Optional[Sequence[str]] = None,
+        timestamp: Optional[float] = None,
+    ) -> dict[str, Any]:
+        """Record entity interaction signals (TS: interactMemory).
+
+        Sends POST /v1/memory/interact.
+        """
+        if not namespace or not isinstance(namespace, str):
+            raise ValueError("namespace is required and must be a string")
+        if not entity_names or not isinstance(entity_names, (list, tuple)):
+            raise ValueError("entity_names must be a non-empty list of strings")
+
+        body: dict[str, Any] = {"namespace": namespace, "entityNames": list(entity_names)}
+        if description is not None:
+            body["description"] = description
+        if interaction_level is not None:
+            body["interactionLevel"] = interaction_level
+        if interaction_levels is not None:
+            body["interactionLevels"] = list(interaction_levels)
+        if timestamp is not None:
+            body["timestamp"] = timestamp
+
+        return self._send("POST", INTERACT_PATH, body)
+
+    def recall_memory_master(
+        self,
+        *,
+        namespace: str,
+        max_chunks: Optional[int] = None,
+    ) -> GetContextResponse:
+        """Recall context from the master node (TS: recallMemory).
+
+        Sends POST /v1/memory/recall and parses returned context chunks
+        into the same GetContextResponse shape as recall_memory().
+        """
+        if not namespace or not isinstance(namespace, str):
+            raise ValueError("namespace is required and must be a string")
+        if max_chunks is not None and (not isinstance(max_chunks, int) or max_chunks < 1):
+            raise ValueError("max_chunks must be an integer >= 1")
+
+        body: dict[str, Any] = {"namespace": namespace}
+        if max_chunks is not None:
+            body["maxChunks"] = max_chunks
+
+        data = self._send("POST", RECALL_MASTER_PATH, body)
+        items = self._extract_read_items(data, namespace)
+        context = self._extract_context_string(data, items)
+        return GetContextResponse(context=context, items=items, count=len(items))
+
+    def recall_memories(
+        self,
+        *,
+        namespace: Optional[str] = None,
+        top_k: Optional[float] = None,
+        min_retention: Optional[float] = None,
+        as_of: Optional[float] = None,
+    ) -> dict[str, Any]:
+        """Recall memories from Ebbinghaus bank (TS: recallMemories).
+
+        Sends POST /v1/memory/memories/recall.
+        Returns raw backend `data` dict.
+        """
+        body: dict[str, Any] = {}
+        if namespace is not None:
+            if not isinstance(namespace, str) or not namespace:
+                raise ValueError("namespace must be a non-empty string")
+            body["namespace"] = namespace
+
+        if top_k is not None:
+            if not isinstance(top_k, (int, float)) or not float(top_k) or float(top_k) <= 0:
+                raise ValueError("top_k must be a positive number")
+            body["topK"] = top_k
+
+        if min_retention is not None:
+            if not isinstance(min_retention, (int, float)) or float(min_retention) < 0:
+                raise ValueError("min_retention must be a non-negative number")
+            body["minRetention"] = min_retention
+
+        if as_of is not None:
+            body["asOf"] = as_of
+
+        return self._send("POST", RECALL_MEMORIES_PATH, body)
+
+    # ------------------------------------------------------------------
+    # Documents & mirrored endpoints (aligned with TypeScript SDK)
+    # ------------------------------------------------------------------
+
+    def insert_document(
+        self,
+        *,
+        title: str,
+        content: str,
+        namespace: str,
+        source_type: Optional[str] = None,
+        metadata: Optional[dict[str, Any]] = None,
+        priority: Optional[str] = None,
+        created_at: Optional[float] = None,
+        updated_at: Optional[float] = None,
+        document_id: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Ingest a single document into the documents backend."""
+        if not title or not isinstance(title, str):
+            raise ValueError("title is required and must be a string")
+        if not content or not isinstance(content, str):
+            raise ValueError("content is required and must be a string")
+        if not namespace or not isinstance(namespace, str):
+            raise ValueError("namespace is required and must be a string")
+
+        _validate_timestamps(created_at, updated_at)
+
+        body: dict[str, Any] = {
+            "title": title,
+            "content": content,
+            "namespace": namespace,
+        }
+        if source_type is not None:
+            body["sourceType"] = source_type
+        if metadata is not None:
+            body["metadata"] = metadata
+        if priority is not None:
+            body["priority"] = priority
+        if created_at is not None:
+            body["createdAt"] = created_at
+        if updated_at is not None:
+            body["updatedAt"] = updated_at
+        if document_id is not None:
+            body["documentId"] = document_id
+
+        return self._send("POST", DOCUMENTS_INSERT_PATH, body)
+
+    def insert_documents_batch(
+        self,
+        *,
+        items: Sequence[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Ingest multiple documents in one batch call."""
+        if not items:
+            raise ValueError("items must be a non-empty list")
+
+        normalized_items: list[dict[str, Any]] = []
+        for item in items:
+            title = item.get("title")
+            content = item.get("content")
+            namespace = item.get("namespace")
+            if not isinstance(title, str) or not title:
+                raise ValueError("each item requires string 'title'")
+            if not isinstance(content, str) or not content:
+                raise ValueError("each item requires string 'content'")
+            if not isinstance(namespace, str) or not namespace:
+                raise ValueError("each item requires string 'namespace'")
+
+            created_at = item.get("createdAt", item.get("created_at"))
+            updated_at = item.get("updatedAt", item.get("updated_at"))
+            _validate_timestamps(created_at, updated_at)
+
+            body_item: dict[str, Any] = {
+                "title": title,
+                "content": content,
+                "namespace": namespace,
+            }
+            if "sourceType" in item or "source_type" in item:
+                body_item["sourceType"] = item.get("sourceType", item.get("source_type"))
+            if "metadata" in item and item.get("metadata") is not None:
+                body_item["metadata"] = item.get("metadata")
+            if "priority" in item and item.get("priority") is not None:
+                body_item["priority"] = item.get("priority")
+            if created_at is not None:
+                body_item["createdAt"] = created_at
+            if updated_at is not None:
+                body_item["updatedAt"] = updated_at
+            if "documentId" in item or "document_id" in item:
+                body_item["documentId"] = item.get("documentId", item.get("document_id"))
+
+            normalized_items.append(body_item)
+
+        return self._send(
+            "POST",
+            DOCUMENTS_BATCH_PATH,
+            {"items": normalized_items},
+        )
+
+    def list_documents(
+        self,
+        *,
+        namespace: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+    ) -> dict[str, Any]:
+        """List ingested documents."""
+        params: dict[str, Any] = {}
+        if namespace:
+            params["namespace"] = namespace
+        if limit is not None:
+            params["limit"] = limit
+        if offset is not None:
+            params["offset"] = offset
+        return self._send_get(DOCUMENTS_LIST_PATH, params if params else None)
+
+    def get_document(
+        self,
+        *,
+        document_id: str,
+        namespace: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Get document details for a single document id."""
+        if not document_id or not isinstance(document_id, str):
+            raise ValueError("document_id is required and must be a string")
+        params: dict[str, Any] = {}
+        if namespace:
+            params["namespace"] = namespace
+        path = f"{DOCUMENTS_LIST_PATH}/{quote(document_id, safe='')}"
+        return self._send_get(path, params if params else None)
+
+    def delete_document(
+        self,
+        *,
+        document_id: str,
+        namespace: str,
+    ) -> dict[str, Any]:
+        """Delete a single ingested document."""
+        if not document_id or not isinstance(document_id, str):
+            raise ValueError("document_id is required and must be a string")
+        if not namespace or not isinstance(namespace, str):
+            raise ValueError("namespace is required and must be a string")
+
+        path = f"{DOCUMENTS_LIST_PATH}/{quote(document_id, safe='')}"
+        return self._send_delete(path, {"namespace": namespace})
+
+    def get_graph_snapshot(
+        self,
+        *,
+        namespace: Optional[str] = None,
+        mode: Optional[str] = None,
+        limit: Optional[int] = None,
+        seed_limit: Optional[int] = None,
+    ) -> dict[str, Any]:
+        """Get admin graph snapshot (backend-specific)."""
+        params: dict[str, Any] = {}
+        if namespace:
+            params["namespace"] = namespace
+        if mode:
+            params["mode"] = mode
+        if limit is not None:
+            params["limit"] = limit
+        if seed_limit is not None:
+            params["seed_limit"] = seed_limit
+        return self._send_get(
+            DOCUMENTS_GRAPH_SNAPSHOT_PATH,
+            params if params else None,
+        )
+
+    def query_memory_context(
+        self,
+        *,
+        query: str,
+        namespace: Optional[str] = None,
+        include_references: Optional[bool] = None,
+        max_chunks: Optional[int] = None,
+        document_ids: Optional[Sequence[str]] = None,
+        recall_only: Optional[bool] = None,
+        llm_query: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Query memory context via the mirrored /v1/memory/queries endpoint."""
+        if not query or not isinstance(query, str):
+            raise ValueError("query is required and must be a string")
+
+        body: dict[str, Any] = {"query": query}
+        if include_references is not None:
+            body["includeReferences"] = include_references
+        if namespace:
+            body["namespace"] = namespace
+        if max_chunks is not None:
+            body["maxChunks"] = max_chunks
+        if document_ids is not None:
+            body["documentIds"] = list(document_ids)
+        if recall_only is not None:
+            body["recallOnly"] = recall_only
+        if llm_query is not None:
+            body["llmQuery"] = llm_query
+
+        return self._send("POST", MEMORY_QUERIES_PATH, body)
+
+    def chat_memory_context(
+        self,
+        *,
+        messages: Sequence[dict[str, Any]],
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ) -> dict[str, Any]:
+        """Chat with memory context via the mirrored /v1/memory/conversations endpoint."""
+        if not messages or not isinstance(messages, (list, tuple)):
+            raise ValueError("messages must be a non-empty list of {role, content} dicts")
+        # Keep request shape aligned with the backend/TS SDK.
+        body: dict[str, Any] = {"messages": list(messages)}
+        if temperature is not None:
+            body["temperature"] = temperature
+        if max_tokens is not None:
+            body["maxTokens"] = max_tokens
+        return self._send("POST", MEMORY_CONVERSATIONS_PATH, body)
+
+    def record_interactions(
+        self,
+        *,
+        namespace: str,
+        entity_names: Sequence[str],
+        description: Optional[str] = None,
+        interaction_level: Optional[str] = None,
+        interaction_levels: Optional[Sequence[str]] = None,
+        timestamp: Optional[float] = None,
+    ) -> dict[str, Any]:
+        """Record entity interaction signals."""
+        if not namespace:
+            raise ValueError("namespace is required")
+        if not entity_names or not isinstance(entity_names, (list, tuple)):
+            raise ValueError("entity_names must be a non-empty list")
+
+        body: dict[str, Any] = {
+            "namespace": namespace,
+            "entityNames": list(entity_names),
+        }
+        if description is not None:
+            body["description"] = description
+        if interaction_level is not None:
+            body["interactionLevel"] = interaction_level
+        if interaction_levels is not None:
+            body["interactionLevels"] = list(interaction_levels)
+        if timestamp is not None:
+            body["timestamp"] = timestamp
+
+        return self._send("POST", MEMORY_INTERACTIONS_PATH, body)
+
+    def recall_thoughts(
+        self,
+        *,
+        namespace: Optional[str] = None,
+        max_chunks: Optional[int] = None,
+        temperature: Optional[float] = None,
+        randomness_seed: Optional[int] = None,
+        persist: Optional[bool] = None,
+        enable_prediction_check: Optional[bool] = None,
+        thought_prompt: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Generate reflective thoughts."""
+        body: dict[str, Any] = {}
+        if namespace:
+            body["namespace"] = namespace
+        if max_chunks is not None:
+            body["maxChunks"] = max_chunks
+        if temperature is not None:
+            body["temperature"] = temperature
+        if randomness_seed is not None:
+            body["randomnessSeed"] = randomness_seed
+        if persist is not None:
+            body["persist"] = persist
+        if enable_prediction_check is not None:
+            body["enablePredictionCheck"] = enable_prediction_check
+        if thought_prompt is not None:
+            body["thoughtPrompt"] = thought_prompt
+        return self._send("POST", MEMORY_THOUGHTS_PATH, body)
+
+    def get_ingestion_job(self, *, job_id: str) -> dict[str, Any]:
+        """Get memory ingestion job status by job id."""
+        if not job_id or not isinstance(job_id, str):
+            raise ValueError("job_id is required and must be a string")
+        path = f"{INGESTION_JOB_PATH_PREFIX}/{quote(job_id, safe='')}"
+        return self._send_get(path, None)
+
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
@@ -424,6 +901,30 @@ class TinyHumanMemoryClient:
             request.url,
             self._debug_headers(),
             body,
+        )
+        response = self._http.send(request)
+        return self._parse_response(response)
+
+    def _send_get(
+        self, path: str, params: Optional[dict[str, Any]] = None
+    ) -> dict[str, Any]:
+        request = self._http.build_request("GET", path, params=params)
+        logger.debug(
+            "HTTP GET %s headers=%s json=<none>",
+            request.url,
+            self._debug_headers(),
+        )
+        response = self._http.send(request)
+        return self._parse_response(response)
+
+    def _send_delete(
+        self, path: str, params: Optional[dict[str, Any]] = None
+    ) -> dict[str, Any]:
+        request = self._http.build_request("DELETE", path, params=params)
+        logger.debug(
+            "HTTP DELETE %s headers=%s json=<none>",
+            request.url,
+            self._debug_headers(),
         )
         response = self._http.send(request)
         return self._parse_response(response)
