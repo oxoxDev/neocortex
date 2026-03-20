@@ -38,4 +38,8 @@ jobs:
 
       - run: yarn test
 
+      - name: Verify package exists on npm
+        run: |
+          npm view @tinyhumansai/neocortex version
+
       - run: npm publish --provenance --access public
