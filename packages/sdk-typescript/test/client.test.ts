@@ -46,7 +46,7 @@ describe('AlphahumanMemoryClient', () => {
       );
     });
 
-    it('POSTs to /v1/memory/insert with correct body and headers', async () => {
+    it('POSTs to /memory/insert with correct body and headers', async () => {
       fetchMock.mockResolvedValueOnce({
         ok: true,
         text: () =>
@@ -68,7 +68,7 @@ describe('AlphahumanMemoryClient', () => {
       await client.insertMemory(params);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith(
-        `${baseUrl}/v1/memory/insert`,
+        `${baseUrl}/memory/insert`,
         expect.objectContaining({
           method: 'POST',
           headers: {
@@ -122,7 +122,7 @@ describe('AlphahumanMemoryClient', () => {
       await expect(client.queryMemory({ query: 'q', maxChunks: 201 })).rejects.toThrow('maxChunks');
     });
 
-    it('POSTs to /v1/memory/query', async () => {
+    it('POSTs to /memory/query', async () => {
       fetchMock.mockResolvedValueOnce({
         ok: true,
         text: () =>
@@ -136,7 +136,7 @@ describe('AlphahumanMemoryClient', () => {
       const client = new AlphahumanMemoryClient({ token, baseUrl });
       await client.queryMemory({ query: 'hello', namespace: 'ns', maxChunks: 10 });
       expect(fetchMock).toHaveBeenCalledWith(
-        `${baseUrl}/v1/memory/query`,
+        `${baseUrl}/memory/query`,
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({
@@ -153,7 +153,7 @@ describe('AlphahumanMemoryClient', () => {
   });
 
   describe('deleteMemory', () => {
-    it('POSTs to /v1/memory/admin/delete', async () => {
+    it('POSTs to /memory/admin/delete', async () => {
       fetchMock.mockResolvedValueOnce({
         ok: true,
         text: () =>
@@ -173,7 +173,7 @@ describe('AlphahumanMemoryClient', () => {
       const params: DeleteMemoryParams = { namespace: 'my-ns' };
       await client.deleteMemory(params);
       expect(fetchMock).toHaveBeenCalledWith(
-        `${baseUrl}/v1/memory/admin/delete`,
+        `${baseUrl}/memory/admin/delete`,
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({ namespace: 'my-ns' }),
@@ -192,7 +192,7 @@ describe('AlphahumanMemoryClient', () => {
       }
     });
 
-    it('POSTs to /v1/memory/recall', async () => {
+    it('POSTs to /memory/recall', async () => {
       fetchMock.mockResolvedValueOnce({
         ok: true,
         text: () =>
@@ -206,7 +206,7 @@ describe('AlphahumanMemoryClient', () => {
       const client = new AlphahumanMemoryClient({ token, baseUrl });
       await client.recallMemory({ namespace: 'ns', maxChunks: 10 });
       expect(fetchMock).toHaveBeenCalledWith(
-        `${baseUrl}/v1/memory/recall`,
+        `${baseUrl}/memory/recall`,
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({ namespace: 'ns', maxChunks: 10 }),
@@ -225,7 +225,7 @@ describe('AlphahumanMemoryClient', () => {
       }
     });
 
-    it('POSTs to /v1/memory/memories/recall', async () => {
+    it('POSTs to /memory/memories/recall', async () => {
       fetchMock.mockResolvedValueOnce({
         ok: true,
         text: () =>
@@ -239,7 +239,7 @@ describe('AlphahumanMemoryClient', () => {
       const client = new AlphahumanMemoryClient({ token, baseUrl });
       await client.recallMemories({ namespace: 'ns', topK: 5 });
       expect(fetchMock).toHaveBeenCalledWith(
-        `${baseUrl}/v1/memory/memories/recall`,
+        `${baseUrl}/memory/memories/recall`,
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({ namespace: 'ns', topK: 5, minRetention: undefined, asOf: undefined }),
@@ -277,7 +277,7 @@ describe('AlphahumanMemoryClient', () => {
   });
 
   describe('chatMemory', () => {
-    it('POSTs to /v1/memory/chat', async () => {
+    it('POSTs to /memory/chat', async () => {
       fetchMock.mockResolvedValueOnce({
         ok: true,
         text: () => Promise.resolve(JSON.stringify({ success: true, data: { content: 'hello' } })),
@@ -285,7 +285,7 @@ describe('AlphahumanMemoryClient', () => {
       const client = new AlphahumanMemoryClient({ token, baseUrl });
       await client.chatMemory({ messages: [{ role: 'user', content: 'hi' }] });
       expect(fetchMock).toHaveBeenCalledWith(
-        `${baseUrl}/v1/memory/chat`,
+        `${baseUrl}/memory/chat`,
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({ messages: [{ role: 'user', content: 'hi' }] }),
@@ -295,7 +295,7 @@ describe('AlphahumanMemoryClient', () => {
   });
 
   describe('listDocuments', () => {
-    it('GETs from /v1/memory/documents with query params', async () => {
+    it('GETs from /memory/documents with query params', async () => {
       fetchMock.mockResolvedValueOnce({
         ok: true,
         text: () => Promise.resolve(JSON.stringify({ success: true, data: {} })),
@@ -303,7 +303,7 @@ describe('AlphahumanMemoryClient', () => {
       const client = new AlphahumanMemoryClient({ token, baseUrl });
       await client.listDocuments({ namespace: 'ns', limit: 10 });
       expect(fetchMock).toHaveBeenCalledWith(
-        `${baseUrl}/v1/memory/documents?namespace=ns&limit=10`,
+        `${baseUrl}/memory/documents?namespace=ns&limit=10`,
         expect.objectContaining({ method: 'GET' })
       );
     });

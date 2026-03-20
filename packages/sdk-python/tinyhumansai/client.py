@@ -26,26 +26,25 @@ from .types import (
 
 logger = logging.getLogger("tinyhumansai")
 
-INSERT_PATH = "/v1/memory/insert"
-QUERY_PATH = "/v1/memory/query"
-DELETE_PATH = "/v1/memory/admin/delete"
+INSERT_PATH = "/memory/insert"
+QUERY_PATH = "/memory/query"
+DELETE_PATH = "/memory/admin/delete"
 
 # --- Newer endpoints (documents, mirrored context, admin graph, etc.) ---
-SYNC_PATH = "/v1/memory/sync"
-CHAT_PATH = "/v1/memory/chat"
-INTERACT_PATH = "/v1/memory/interact"
-RECALL_MASTER_PATH = "/v1/memory/recall"
-RECALL_MEMORIES_PATH = "/v1/memory/memories/recall"
+CHAT_PATH = "/memory/chat"
+INTERACT_PATH = "/memory/interact"
+RECALL_MASTER_PATH = "/memory/recall"
+RECALL_MEMORIES_PATH = "/memory/memories/recall"
 
-DOCUMENTS_INSERT_PATH = "/v1/memory/documents"
-DOCUMENTS_BATCH_PATH = "/v1/memory/documents/batch"
-DOCUMENTS_LIST_PATH = "/v1/memory/documents"
-DOCUMENTS_GRAPH_SNAPSHOT_PATH = "/v1/memory/admin/graph-snapshot"
-MEMORY_QUERIES_PATH = "/v1/memory/queries"
-MEMORY_CONVERSATIONS_PATH = "/v1/memory/conversations"
-MEMORY_INTERACTIONS_PATH = "/v1/memory/interactions"
-MEMORY_THOUGHTS_PATH = "/v1/memory/memories/thoughts"
-INGESTION_JOB_PATH_PREFIX = "/v1/memory/ingestion/jobs"
+DOCUMENTS_INSERT_PATH = "/memory/documents"
+DOCUMENTS_BATCH_PATH = "/memory/documents/batch"
+DOCUMENTS_LIST_PATH = "/memory/documents"
+DOCUMENTS_GRAPH_SNAPSHOT_PATH = "/memory/admin/graph-snapshot"
+MEMORY_QUERIES_PATH = "/memory/queries"
+MEMORY_CONVERSATIONS_PATH = "/memory/conversations"
+MEMORY_INTERACTIONS_PATH = "/memory/interactions"
+MEMORY_THOUGHTS_PATH = "/memory/memories/thoughts"
+INGESTION_JOB_PATH_PREFIX = "/memory/ingestion/jobs"
 
 
 def _validate_timestamp(value: Optional[float], name: str) -> None:
@@ -430,62 +429,6 @@ class TinyHumanMemoryClient:
             url=url,
         )
 
-    def sync_memory(
-        self,
-        *,
-        workspace_id: str,
-        agent_id: str,
-        files: Sequence[dict[str, Any]],
-        source: Optional[str] = None,
-    ) -> dict[str, Any]:
-        """Sync OpenClaw memory files (TS: syncMemory).
-
-        Sends POST /v1/memory/sync.
-        """
-        if not workspace_id or not isinstance(workspace_id, str):
-            raise ValueError("workspace_id is required and must be a string")
-        if not agent_id or not isinstance(agent_id, str):
-            raise ValueError("agent_id is required and must be a string")
-        if not files or not isinstance(files, (list, tuple)):
-            raise ValueError("files must be a non-empty list of file objects")
-
-        normalized_files: list[dict[str, Any]] = []
-        for f in files:
-            file_path = f.get("filePath", f.get("file_path"))
-            content = f.get("content")
-            timestamp = f.get("timestamp")
-            hash_value = f.get("hash")
-
-            if not file_path or not isinstance(file_path, str):
-                raise ValueError("each file requires filePath/file_path (string)")
-            if not content or not isinstance(content, str):
-                raise ValueError("each file requires content (string)")
-            if timestamp is None or not isinstance(timestamp, (str, int, float)):
-                raise ValueError("each file requires timestamp (string|number)")
-            if not hash_value or not isinstance(hash_value, str):
-                raise ValueError("each file requires hash (string)")
-
-            normalized_files.append(
-                {
-                    "filePath": file_path,
-                    "content": content,
-                    # backend expects string-ish timestamps; keep original type if str,
-                    # otherwise stringify numeric timestamps.
-                    "timestamp": timestamp if isinstance(timestamp, str) else str(timestamp),
-                    "hash": hash_value,
-                }
-            )
-
-        body: dict[str, Any] = {
-            "workspaceId": workspace_id,
-            "agentId": agent_id,
-            "files": normalized_files,
-        }
-        if source is not None:
-            body["source"] = source
-
-        return self._send("POST", SYNC_PATH, body)
-
     def chat_memory(
         self,
         *,
@@ -495,7 +438,7 @@ class TinyHumanMemoryClient:
     ) -> dict[str, Any]:
         """Chat with memory context (TS: chatMemory).
 
-        Sends POST /v1/memory/chat.
+        Sends POST /memory/chat.
         """
         if not messages or not isinstance(messages, (list, tuple)):
             raise ValueError("messages must be a non-empty list of {role, content} dicts")
@@ -527,7 +470,7 @@ class TinyHumanMemoryClient:
     ) -> dict[str, Any]:
         """Record entity interaction signals (TS: interactMemory).
 
-        Sends POST /v1/memory/interact.
+        Sends POST /memory/interact.
         """
         if not namespace or not isinstance(namespace, str):
             raise ValueError("namespace is required and must be a string")
@@ -554,7 +497,7 @@ class TinyHumanMemoryClient:
     ) -> GetContextResponse:
         """Recall context from the master node (TS: recallMemory).
 
-        Sends POST /v1/memory/recall and parses returned context chunks
+        Sends POST /memory/recall and parses returned context chunks
         into the same GetContextResponse shape as recall_memory().
         """
         if not namespace or not isinstance(namespace, str):
@@ -581,7 +524,7 @@ class TinyHumanMemoryClient:
     ) -> dict[str, Any]:
         """Recall memories from Ebbinghaus bank (TS: recallMemories).
 
-        Sends POST /v1/memory/memories/recall.
+        Sends POST /memory/memories/recall.
         Returns raw backend `data` dict.
         """
         body: dict[str, Any] = {}
@@ -784,7 +727,7 @@ class TinyHumanMemoryClient:
         recall_only: Optional[bool] = None,
         llm_query: Optional[str] = None,
     ) -> dict[str, Any]:
-        """Query memory context via the mirrored /v1/memory/queries endpoint."""
+        """Query memory context via the mirrored /memory/queries endpoint."""
         if not query or not isinstance(query, str):
             raise ValueError("query is required and must be a string")
 
@@ -811,7 +754,7 @@ class TinyHumanMemoryClient:
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
     ) -> dict[str, Any]:
-        """Chat with memory context via the mirrored /v1/memory/conversations endpoint."""
+        """Chat with memory context via the mirrored /memory/conversations endpoint."""
         if not messages or not isinstance(messages, (list, tuple)):
             raise ValueError("messages must be a non-empty list of {role, content} dicts")
         # Keep request shape aligned with the backend/TS SDK.

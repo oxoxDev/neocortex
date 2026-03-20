@@ -51,11 +51,11 @@ await client.deleteMemory({ namespace: 'preferences' });
 | Param | Type | Required | Description |
 |-------|------|----------|-------------|
 | `config.token` | `string` | ✓ | API key or JWT |
-| `config.baseUrl` | `string` | | Override API URL. If not set, uses `ALPHAHUMAN_BASE_URL` env or default `https://staging-api.alphahuman.xyz` |
+| `config.baseUrl` | `string` | | Override API URL. If not set, uses `TINYHUMANS_BASE_URL` env or default `https://api.tinyhumans.ai` |
 
 ### `client.insertMemory(params)`
 
-Insert a document into memory. **POST /v1/memory/insert**
+Insert a document into memory. **POST /memory/insert**
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -73,7 +73,7 @@ Returns `InsertMemoryResponse` with `data: { status, stats, usage? }`.
 
 ### `client.queryMemory(params)`
 
-Query memory via RAG. **POST /v1/memory/query**
+Query memory via RAG. **POST /memory/query**
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -88,7 +88,7 @@ Returns `QueryMemoryResponse` with `data: { context?, usage?, cached, llmContext
 
 ### `client.deleteMemory(params?)`
 
-Delete memory (admin). **POST /v1/memory/admin/delete**
+Delete memory (admin). **POST /memory/admin/delete**
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -98,7 +98,7 @@ Returns `DeleteMemoryResponse` with `data: { status, userId, namespace?, nodesDe
 
 ### `client.recallMemory(params?)`
 
-Recall context from Master node. **POST /v1/memory/recall**
+Recall context from Master node. **POST /memory/recall**
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -109,7 +109,7 @@ Returns `RecallMemoryResponse` with `data: { context?, usage?, cached, response?
 
 ### `client.recallMemories(params?)`
 
-Recall memories from Ebbinghaus bank. **POST /v1/memory/memories/recall**
+Recall memories from Ebbinghaus bank. **POST /memory/memories/recall**
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -122,7 +122,7 @@ Returns `RecallMemoriesResponse` with `data: { memories }`.
 
 ### `client.chatMemory(params)`
 
-Chat with DeltaNet memory cache. **POST /v1/memory/chat**
+Chat with DeltaNet memory cache. **POST /memory/chat**
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -134,7 +134,7 @@ Returns `ChatMemoryResponse`.
 
 ### `client.recallThoughts(params?)`
 
-Generate reflective thoughts. **POST /v1/memory/memories/thoughts**
+Generate reflective thoughts. **POST /memory/memories/thoughts**
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -144,28 +144,15 @@ Generate reflective thoughts. **POST /v1/memory/memories/thoughts**
 
 Returns `RecallThoughtsResponse`.
 
-### `client.syncMemory(params)`
-
-Sync OpenClaw memory files. **POST /v1/memory/sync**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `workspaceId` | `string` | ✓ | Workspace identifier |
-| `agentId` | `string` | ✓ | Agent identifier |
-| `source` | `'startup' \| 'agent_end'` | | Optional source |
-| `files` | `{ filePath: string; content: string; timestamp: string; hash: string }[]` | ✓ | Files to sync |
-
-Returns `SyncMemoryResponse`.
-
 ### `client.insertDocument(params)`
 
-Ingest a single memory document. **POST /v1/memory/documents**
+Ingest a single memory document. **POST /memory/documents**
 
 Supports the same fields as `insertMemory` (`title`, `content`, `namespace`, optional `sourceType`, `metadata`, `priority`, `createdAt`, `updatedAt`, `documentId`).
 
 ### `client.insertDocumentsBatch(params)`
 
-Ingest multiple memory documents in batch. **POST /v1/memory/documents/batch**
+Ingest multiple memory documents in batch. **POST /memory/documents/batch**
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -175,7 +162,7 @@ Returns `InsertDocumentsBatchResponse`.
 
 ### `client.listDocuments(params?)`
 
-List ingested memory documents. **GET /v1/memory/documents**
+List ingested memory documents. **GET /memory/documents**
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -187,7 +174,7 @@ Returns `ListDocumentsResponse`.
 
 ### `client.getDocument(params)`
 
-Get details for a memory document. **GET /v1/memory/documents/:documentId**
+Get details for a memory document. **GET /memory/documents/:documentId**
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -198,7 +185,7 @@ Returns `GetDocumentResponse`.
 
 ### `client.deleteDocument(params)`
 
-Delete a memory document. **DELETE /v1/memory/documents/:documentId**
+Delete a memory document. **DELETE /memory/documents/:documentId**
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -209,7 +196,7 @@ Returns `DeleteMemoryResponse`.
 
 ### `client.queryMemoryContext(params)`
 
-Query memory context. **POST /v1/memory/queries**
+Query memory context. **POST /memory/queries**
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -225,7 +212,7 @@ Returns `QueryMemoryResponse`.
 
 ### `client.chatMemoryContext(params)`
 
-Chat with memory context. **POST /v1/memory/conversations**
+Chat with memory context. **POST /memory/conversations**
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -237,7 +224,7 @@ Returns `ChatMemoryResponse`.
 
 ### `client.recordInteractions(params)`
 
-Record interaction signals. **POST /v1/memory/interactions**
+Record interaction signals. **POST /memory/interactions**
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -251,13 +238,13 @@ Returns `InteractMemoryResponse`.
 
 ### `client.getIngestionJob(jobId)`
 
-Get memory ingestion job status. **GET /v1/memory/ingestion/jobs/:jobId**
+Get memory ingestion job status. **GET /memory/ingestion/jobs/:jobId**
 
 Returns `GetIngestionJobResponse`.
 
 ### `client.getGraphSnapshot(params?)`
 
-Get admin graph snapshot. **GET /v1/memory/admin/graph-snapshot**
+Get admin graph snapshot. **GET /memory/admin/graph-snapshot**
 
 | Field | Type | Description |
 |-------|------|-------------|

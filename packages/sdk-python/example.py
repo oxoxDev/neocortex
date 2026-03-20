@@ -7,7 +7,6 @@ Optional: set TINYHUMANSAI_LOG_LEVEL=DEBUG to print outbound API requests.
 """
 
 import logging
-import hashlib
 import os
 import time
 
@@ -191,33 +190,6 @@ except Exception as e:
     print("get_graph_snapshot failed (optional):", e)
 
 print("\n--- Core endpoints (new) ---")
-
-try:
-    workspace_id = os.environ.get("TINYHUMANS_WORKSPACE_ID")
-    agent_id = os.environ.get("TINYHUMANS_AGENT_ID")
-    if workspace_id and agent_id:
-        sync_content = "File sync content from sdk-python example."
-        sync_hash = hashlib.sha256(sync_content.encode("utf-8")).hexdigest()
-        sync_res = client.sync_memory(
-            workspace_id=workspace_id,
-            agent_id=agent_id,
-            source="startup",
-            files=[
-                {
-                    "file_path": "example.txt",
-                    "content": sync_content,
-                    "timestamp": str(int(time.time())),
-                    "hash": sync_hash,
-                }
-            ],
-        )
-        print("sync_memory:", sync_res)
-    else:
-        print(
-            "sync_memory skipped (set TINYHUMANS_WORKSPACE_ID and TINYHUMANS_AGENT_ID)."
-        )
-except Exception as e:
-    print("sync_memory failed (optional):", e)
 
 try:
     chat_res = client.chat_memory(

@@ -1,14 +1,19 @@
 // Alphahuman Memory SDK for TypeScript
 // Aligned with AlphaHuman backend API: insert, query, admin/delete, recall, memories/recall, chat, thought, interact, etc.
 
-const DEFAULT_BASE_URL = 'https://staging-api.alphahuman.xyz';
+const DEFAULT_BASE_URL = "https://api.tinyhumans.ai";
 
-/** Resolve ALPHAHUMAN_BASE_URL from env when available (e.g. Node). */
+/** Resolve TINYHUMANS_BASE_URL from env when available (e.g. Node). */
 function getEnvBaseUrl(): string | undefined {
   try {
-    const g = typeof globalThis !== 'undefined' ? globalThis : (undefined as unknown as Record<string, unknown>);
-    const env = (g as { process?: { env?: Record<string, string | undefined> } })?.process?.env;
-    return env?.ALPHAHUMAN_BASE_URL;
+    const g =
+      typeof globalThis !== "undefined"
+        ? globalThis
+        : (undefined as unknown as Record<string, unknown>);
+    const env = (
+      g as { process?: { env?: Record<string, string | undefined> } }
+    )?.process?.env;
+    return env?.TINYHUMANS_BASE_URL ?? env?.ALPHAHUMAN_BASE_URL;
   } catch {
     return undefined;
   }
@@ -19,7 +24,7 @@ function getEnvBaseUrl(): string | undefined {
 export interface AlphahumanConfig {
   /** Bearer token (API key or JWT) for authentication */
   token: string;
-  /** Base URL of the Alphahuman backend. If omitted, uses ALPHAHUMAN_BASE_URL env or default staging URL */
+  /** Base URL of the Alphahuman backend. If omitted, uses TINYHUMANS_BASE_URL env or default API URL */
   baseUrl?: string;
 }
 
@@ -32,9 +37,9 @@ export interface InsertMemoryParams {
   content: string;
   /** Namespace (required) */
   namespace: string;
-  sourceType?: 'doc' | 'chat' | 'email';
+  sourceType?: "doc" | "chat" | "email";
   metadata?: Record<string, unknown>;
-  priority?: 'high' | 'medium' | 'low';
+  priority?: "high" | "medium" | "low";
   createdAt?: number;
   updatedAt?: number;
   documentId?: string;
@@ -51,31 +56,6 @@ export interface InsertMemoryResponse {
       embedding_tokens: number;
       cost_usd: number;
     };
-    jobId?: string;
-    state?: string;
-  };
-}
-
-// ---------- Sync ----------
-
-export interface SyncFileParams {
-  filePath: string;
-  content: string;
-  timestamp: string;
-  hash: string;
-}
-
-export interface SyncMemoryParams {
-  workspaceId: string;
-  agentId: string;
-  source?: 'startup' | 'agent_end';
-  files: SyncFileParams[];
-}
-
-export interface SyncMemoryResponse {
-  success: boolean;
-  data: {
-    synced: number;
     jobId?: string;
     state?: string;
   };
@@ -117,8 +97,8 @@ export interface InteractMemoryParams {
   namespace: string;
   entityNames: string[];
   description?: string;
-  interactionLevel?: 'view' | 'read' | 'react' | 'engage' | 'create';
-  interactionLevels?: Array<'view' | 'read' | 'react' | 'engage' | 'create'>;
+  interactionLevel?: "view" | "read" | "react" | "engage" | "create";
+  interactionLevels?: Array<"view" | "read" | "react" | "engage" | "create">;
   timestamp?: number;
 }
 
@@ -194,9 +174,9 @@ export interface InsertDocumentsBatchParams {
     title: string;
     content: string;
     namespace: string;
-    sourceType?: 'doc' | 'chat' | 'email';
+    sourceType?: "doc" | "chat" | "email";
     metadata?: Record<string, unknown>;
-    priority?: 'high' | 'medium' | 'low';
+    priority?: "high" | "medium" | "low";
     createdAt?: number;
     updatedAt?: number;
     documentId?: string;
@@ -243,7 +223,7 @@ export interface DeleteDocumentParams {
 
 export interface GetGraphSnapshotParams {
   namespace?: string;
-  mode?: 'master' | 'latest_chunks';
+  mode?: "master" | "latest_chunks";
   limit?: number;
   seed_limit?: number;
 }
@@ -383,7 +363,7 @@ export class AlphahumanError extends Error {
 
   constructor(message: string, status: number, body?: unknown) {
     super(message);
-    this.name = 'AlphahumanError';
+    this.name = "AlphahumanError";
     this.status = status;
     this.body = body;
   }
@@ -396,83 +376,94 @@ export class AlphahumanMemoryClient {
   private readonly token: string;
 
   constructor(config: AlphahumanConfig) {
-    if (!config.token || !config.token.trim()) throw new Error('token is required');
+    if (!config.token || !config.token.trim())
+      throw new Error("token is required");
     const baseUrl = config.baseUrl ?? getEnvBaseUrl() ?? DEFAULT_BASE_URL;
-    this.baseUrl = baseUrl.replace(/\/+$/, '');
+    this.baseUrl = baseUrl.replace(/\/+$/, "");
     this.token = config.token;
   }
 
   // --- Core / Legacy Endpoints ---
 
-  /** Insert (ingest) a document into memory. POST /v1/memory/insert */
-  async insertMemory(params: InsertMemoryParams): Promise<InsertMemoryResponse> {
+  /** Insert (ingest) a document into memory. POST /memory/insert */
+  async insertMemory(
+    params: InsertMemoryParams,
+  ): Promise<InsertMemoryResponse> {
     this.validateInsertParams(params);
-    return this.post<InsertMemoryResponse>('/v1/memory/insert', params);
+    return this.post<InsertMemoryResponse>("/memory/insert", params);
   }
 
-  /** Sync OpenClaw memory files. POST /v1/memory/sync */
-  async syncMemory(params: SyncMemoryParams): Promise<SyncMemoryResponse> {
-    if (!params.workspaceId) throw new Error('workspaceId is required');
-    if (!params.agentId) throw new Error('agentId is required');
-    if (!params.files || !Array.isArray(params.files)) throw new Error('files array is required');
-    return this.post<SyncMemoryResponse>('/v1/memory/sync', params);
-  }
-
-  /** Query memory via RAG. POST /v1/memory/query */
+  /** Query memory via RAG. POST /memory/query */
   async queryMemory(params: QueryMemoryParams): Promise<QueryMemoryResponse> {
     this.validateQueryParams(params);
-    return this.post<QueryMemoryResponse>('/v1/memory/query', params);
+    return this.post<QueryMemoryResponse>("/memory/query", params);
   }
 
-  /** Chat with DeltaNet memory cache. POST /v1/memory/chat */
+  /** Chat with DeltaNet memory cache. POST /memory/chat */
   async chatMemory(params: ChatMemoryParams): Promise<ChatMemoryResponse> {
-    if (!params.messages || !Array.isArray(params.messages)) throw new Error('messages array is required');
-    return this.post<ChatMemoryResponse>('/v1/memory/chat', params);
+    if (!params.messages || !Array.isArray(params.messages))
+      throw new Error("messages array is required");
+    return this.post<ChatMemoryResponse>("/memory/chat", params);
   }
 
-  /** Delete memory (admin). POST /v1/memory/admin/delete */
-  async deleteMemory(params: DeleteMemoryParams = {}): Promise<DeleteMemoryResponse> {
-    return this.post<DeleteMemoryResponse>('/v1/memory/admin/delete', {
+  /** Delete memory (admin). POST /memory/admin/delete */
+  async deleteMemory(
+    params: DeleteMemoryParams = {},
+  ): Promise<DeleteMemoryResponse> {
+    return this.post<DeleteMemoryResponse>("/memory/admin/delete", {
       namespace: params.namespace,
     });
   }
 
-  /** Record entity interactions. POST /v1/memory/interact */
-  async interactMemory(params: InteractMemoryParams): Promise<InteractMemoryResponse> {
-    if (!params.namespace) throw new Error('namespace is required');
-    if (!params.entityNames || !Array.isArray(params.entityNames)) throw new Error('entityNames array is required');
-    return this.post<InteractMemoryResponse>('/v1/memory/interact', params);
+  /** Record entity interactions. POST /memory/interact */
+  async interactMemory(
+    params: InteractMemoryParams,
+  ): Promise<InteractMemoryResponse> {
+    if (!params.namespace) throw new Error("namespace is required");
+    if (!params.entityNames || !Array.isArray(params.entityNames))
+      throw new Error("entityNames array is required");
+    return this.post<InteractMemoryResponse>("/memory/interact", params);
   }
 
-  /** Recall context from Master node. POST /v1/memory/recall */
-  async recallMemory(params: RecallMemoryParams = {}): Promise<RecallMemoryResponse> {
+  /** Recall context from Master node. POST /memory/recall */
+  async recallMemory(
+    params: RecallMemoryParams = {},
+  ): Promise<RecallMemoryResponse> {
     if (
       params.maxChunks !== undefined &&
-      (typeof params.maxChunks !== 'number' || !Number.isInteger(params.maxChunks) || params.maxChunks <= 0)
+      (typeof params.maxChunks !== "number" ||
+        !Number.isInteger(params.maxChunks) ||
+        params.maxChunks <= 0)
     ) {
-      throw new Error('maxChunks must be a positive integer');
+      throw new Error("maxChunks must be a positive integer");
     }
-    return this.post<RecallMemoryResponse>('/v1/memory/recall', {
+    return this.post<RecallMemoryResponse>("/memory/recall", {
       namespace: params.namespace,
       maxChunks: params.maxChunks,
     });
   }
 
-  /** Recall memories from Ebbinghaus bank. POST /v1/memory/memories/recall */
-  async recallMemories(params: RecallMemoriesParams = {}): Promise<RecallMemoriesResponse> {
+  /** Recall memories from Ebbinghaus bank. POST /memory/memories/recall */
+  async recallMemories(
+    params: RecallMemoriesParams = {},
+  ): Promise<RecallMemoriesResponse> {
     if (
       params.topK !== undefined &&
-      (typeof params.topK !== 'number' || !Number.isFinite(params.topK) || params.topK <= 0)
+      (typeof params.topK !== "number" ||
+        !Number.isFinite(params.topK) ||
+        params.topK <= 0)
     ) {
-      throw new Error('topK must be a positive number');
+      throw new Error("topK must be a positive number");
     }
     if (
       params.minRetention !== undefined &&
-      (typeof params.minRetention !== 'number' || !Number.isFinite(params.minRetention) || params.minRetention < 0)
+      (typeof params.minRetention !== "number" ||
+        !Number.isFinite(params.minRetention) ||
+        params.minRetention < 0)
     ) {
-      throw new Error('minRetention must be a non-negative number');
+      throw new Error("minRetention must be a non-negative number");
     }
-    return this.post<RecallMemoriesResponse>('/v1/memory/memories/recall', {
+    return this.post<RecallMemoriesResponse>("/memory/memories/recall", {
       namespace: params.namespace,
       topK: params.topK,
       minRetention: params.minRetention,
@@ -480,118 +471,164 @@ export class AlphahumanMemoryClient {
     });
   }
 
-  /** Generate reflective thoughts. POST /v1/memory/memories/thoughts */
-  async recallThoughts(params: RecallThoughtsParams = {}): Promise<RecallThoughtsResponse> {
-    return this.post<RecallThoughtsResponse>('/v1/memory/memories/thoughts', params);
+  /** Generate reflective thoughts. POST /memory/memories/thoughts */
+  async recallThoughts(
+    params: RecallThoughtsParams = {},
+  ): Promise<RecallThoughtsResponse> {
+    return this.post<RecallThoughtsResponse>(
+      "/memory/memories/thoughts",
+      params,
+    );
   }
 
-  /** Get memory ingestion job status. GET /v1/memory/ingestion/jobs/:jobId */
+  /** Get memory ingestion job status. GET /memory/ingestion/jobs/:jobId */
   async getIngestionJob(jobId: string): Promise<GetIngestionJobResponse> {
-    if (!jobId) throw new Error('jobId is required');
-    return this.get<GetIngestionJobResponse>(`/v1/memory/ingestion/jobs/${encodeURIComponent(jobId)}`);
+    if (!jobId) throw new Error("jobId is required");
+    return this.get<GetIngestionJobResponse>(
+      `/memory/ingestion/jobs/${encodeURIComponent(jobId)}`,
+    );
   }
 
   // --- Document & Mirrored Endpoints ---
 
-  /** Ingest a single memory document. POST /v1/memory/documents */
-  async insertDocument(params: InsertMemoryParams): Promise<InsertMemoryResponse> {
+  /** Ingest a single memory document. POST /memory/documents */
+  async insertDocument(
+    params: InsertMemoryParams,
+  ): Promise<InsertMemoryResponse> {
     this.validateInsertParams(params);
-    return this.post<InsertMemoryResponse>('/v1/memory/documents', params);
+    return this.post<InsertMemoryResponse>("/memory/documents", params);
   }
 
-  /** Ingest multiple memory documents in batch. POST /v1/memory/documents/batch */
-  async insertDocumentsBatch(params: InsertDocumentsBatchParams): Promise<InsertDocumentsBatchResponse> {
-    if (!params.items || !Array.isArray(params.items) || params.items.length === 0) {
-      throw new Error('items must be a non-empty array');
+  /** Ingest multiple memory documents in batch. POST /memory/documents/batch */
+  async insertDocumentsBatch(
+    params: InsertDocumentsBatchParams,
+  ): Promise<InsertDocumentsBatchResponse> {
+    if (
+      !params.items ||
+      !Array.isArray(params.items) ||
+      params.items.length === 0
+    ) {
+      throw new Error("items must be a non-empty array");
     }
-    return this.post<InsertDocumentsBatchResponse>('/v1/memory/documents/batch', params);
+    return this.post<InsertDocumentsBatchResponse>(
+      "/memory/documents/batch",
+      params,
+    );
   }
 
-  /** List ingested memory documents. GET /v1/memory/documents */
-  async listDocuments(params: ListDocumentsParams = {}): Promise<ListDocumentsResponse> {
+  /** List ingested memory documents. GET /memory/documents */
+  async listDocuments(
+    params: ListDocumentsParams = {},
+  ): Promise<ListDocumentsResponse> {
     const search = new URLSearchParams();
-    if (params.namespace) search.append('namespace', params.namespace);
-    if (params.limit !== undefined) search.append('limit', String(params.limit));
-    if (params.offset !== undefined) search.append('offset', String(params.offset));
-    const qs = search.toString() ? `?${search.toString()}` : '';
-    return this.get<ListDocumentsResponse>(`/v1/memory/documents${qs}`);
+    if (params.namespace) search.append("namespace", params.namespace);
+    if (params.limit !== undefined)
+      search.append("limit", String(params.limit));
+    if (params.offset !== undefined)
+      search.append("offset", String(params.offset));
+    const qs = search.toString() ? `?${search.toString()}` : "";
+    return this.get<ListDocumentsResponse>(`/memory/documents${qs}`);
   }
 
-  /** Get details for a memory document. GET /v1/memory/documents/:documentId */
+  /** Get details for a memory document. GET /memory/documents/:documentId */
   async getDocument(params: GetDocumentParams): Promise<GetDocumentResponse> {
-    if (!params.documentId) throw new Error('documentId is required');
-    const qs = params.namespace ? `?namespace=${encodeURIComponent(params.namespace)}` : '';
-    return this.get<GetDocumentResponse>(`/v1/memory/documents/${encodeURIComponent(params.documentId)}${qs}`);
+    if (!params.documentId) throw new Error("documentId is required");
+    const qs = params.namespace
+      ? `?namespace=${encodeURIComponent(params.namespace)}`
+      : "";
+    return this.get<GetDocumentResponse>(
+      `/memory/documents/${encodeURIComponent(params.documentId)}${qs}`,
+    );
   }
 
-  /** Delete a memory document. DELETE /v1/memory/documents/:documentId */
-  async deleteDocument(params: DeleteDocumentParams): Promise<DeleteMemoryResponse> {
-    if (!params.documentId) throw new Error('documentId is required');
-    if (!params.namespace) throw new Error('namespace is required');
+  /** Delete a memory document. DELETE /memory/documents/:documentId */
+  async deleteDocument(
+    params: DeleteDocumentParams,
+  ): Promise<DeleteMemoryResponse> {
+    if (!params.documentId) throw new Error("documentId is required");
+    if (!params.namespace) throw new Error("namespace is required");
     const qs = `?namespace=${encodeURIComponent(params.namespace)}`;
-    return this.delete<DeleteMemoryResponse>(`/v1/memory/documents/${encodeURIComponent(params.documentId)}${qs}`);
+    return this.delete<DeleteMemoryResponse>(
+      `/memory/documents/${encodeURIComponent(params.documentId)}${qs}`,
+    );
   }
 
-  /** Get admin graph snapshot. GET /v1/memory/admin/graph-snapshot */
-  async getGraphSnapshot(params: GetGraphSnapshotParams = {}): Promise<GetGraphSnapshotResponse> {
+  /** Get admin graph snapshot. GET /memory/admin/graph-snapshot */
+  async getGraphSnapshot(
+    params: GetGraphSnapshotParams = {},
+  ): Promise<GetGraphSnapshotResponse> {
     const search = new URLSearchParams();
-    if (params.namespace) search.append('namespace', params.namespace);
-    if (params.mode) search.append('mode', params.mode);
-    if (params.limit !== undefined) search.append('limit', String(params.limit));
-    if (params.seed_limit !== undefined) search.append('seed_limit', String(params.seed_limit));
-    const qs = search.toString() ? `?${search.toString()}` : '';
-    return this.get<GetGraphSnapshotResponse>(`/v1/memory/admin/graph-snapshot${qs}`);
+    if (params.namespace) search.append("namespace", params.namespace);
+    if (params.mode) search.append("mode", params.mode);
+    if (params.limit !== undefined)
+      search.append("limit", String(params.limit));
+    if (params.seed_limit !== undefined)
+      search.append("seed_limit", String(params.seed_limit));
+    const qs = search.toString() ? `?${search.toString()}` : "";
+    return this.get<GetGraphSnapshotResponse>(
+      `/memory/admin/graph-snapshot${qs}`,
+    );
   }
 
-  /** Query memory context. POST /v1/memory/queries */
-  async queryMemoryContext(params: QueryMemoryParams): Promise<QueryMemoryResponse> {
+  /** Query memory context. POST /memory/queries */
+  async queryMemoryContext(
+    params: QueryMemoryParams,
+  ): Promise<QueryMemoryResponse> {
     this.validateQueryParams(params);
-    return this.post<QueryMemoryResponse>('/v1/memory/queries', params);
+    return this.post<QueryMemoryResponse>("/memory/queries", params);
   }
 
-  /** Chat with memory context. POST /v1/memory/conversations */
-  async chatMemoryContext(params: ChatMemoryParams): Promise<ChatMemoryResponse> {
-    if (!params.messages || !Array.isArray(params.messages)) throw new Error('messages array is required');
-    return this.post<ChatMemoryResponse>('/v1/memory/conversations', params);
+  /** Chat with memory context. POST /memory/conversations */
+  async chatMemoryContext(
+    params: ChatMemoryParams,
+  ): Promise<ChatMemoryResponse> {
+    if (!params.messages || !Array.isArray(params.messages))
+      throw new Error("messages array is required");
+    return this.post<ChatMemoryResponse>("/memory/conversations", params);
   }
 
-  /** Record interaction signals. POST /v1/memory/interactions */
-  async recordInteractions(params: InteractMemoryParams): Promise<InteractMemoryResponse> {
-    if (!params.namespace) throw new Error('namespace is required');
-    if (!params.entityNames || !Array.isArray(params.entityNames)) throw new Error('entityNames array is required');
-    return this.post<InteractMemoryResponse>('/v1/memory/interactions', params);
+  /** Record interaction signals. POST /memory/interactions */
+  async recordInteractions(
+    params: InteractMemoryParams,
+  ): Promise<InteractMemoryResponse> {
+    if (!params.namespace) throw new Error("namespace is required");
+    if (!params.entityNames || !Array.isArray(params.entityNames))
+      throw new Error("entityNames array is required");
+    return this.post<InteractMemoryResponse>("/memory/interactions", params);
   }
 
   // --- Helpers ---
 
   private validateInsertParams(params: InsertMemoryParams) {
-    if (!params.title || typeof params.title !== 'string') {
-      throw new Error('title is required and must be a string');
+    if (!params.title || typeof params.title !== "string") {
+      throw new Error("title is required and must be a string");
     }
-    if (!params.content || typeof params.content !== 'string') {
-      throw new Error('content is required and must be a string');
+    if (!params.content || typeof params.content !== "string") {
+      throw new Error("content is required and must be a string");
     }
-    if (!params.namespace || typeof params.namespace !== 'string') {
-      throw new Error('namespace is required and must be a string');
+    if (!params.namespace || typeof params.namespace !== "string") {
+      throw new Error("namespace is required and must be a string");
     }
   }
 
   private validateQueryParams(params: QueryMemoryParams) {
-    if (!params.query || typeof params.query !== 'string') {
-      throw new Error('query is required and must be a string');
+    if (!params.query || typeof params.query !== "string") {
+      throw new Error("query is required and must be a string");
     }
     if (
       params.maxChunks !== undefined &&
-      (typeof params.maxChunks !== 'number' || params.maxChunks < 1 || params.maxChunks > 200)
+      (typeof params.maxChunks !== "number" ||
+        params.maxChunks < 1 ||
+        params.maxChunks > 200)
     ) {
-      throw new Error('maxChunks must be between 1 and 200');
+      throw new Error("maxChunks must be between 1 and 200");
     }
   }
 
   private async get<T>(path: string): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     const res = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: {
         Authorization: `Bearer ${this.token}`,
       },
@@ -602,9 +639,9 @@ export class AlphahumanMemoryClient {
   private async post<T>(path: string, body: unknown): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     const res = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${this.token}`,
       },
       body: JSON.stringify(body),
@@ -615,7 +652,7 @@ export class AlphahumanMemoryClient {
   private async delete<T>(path: string): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     const res = await fetch(url, {
-      method: 'DELETE',
+      method: "DELETE",
       headers: {
         Authorization: `Bearer ${this.token}`,
       },
@@ -632,7 +669,7 @@ export class AlphahumanMemoryClient {
       throw new AlphahumanError(
         `HTTP ${res.status}: non-JSON response`,
         res.status,
-        text || undefined
+        text || undefined,
       );
     }
     if (!res.ok) {
