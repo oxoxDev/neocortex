@@ -1,0 +1,67 @@
+# Neocortex Mastra Plugin
+
+TypeScript plugin for using **Neocortex (Alphahuman) memory** inside Mastra workflows/agents.
+
+This package is a small adapter that:
+
+- Calls the Alphahuman memory API directly (same contract as `sdk-typescript`)
+- Exposes **tools** for saving, recalling, and deleting memory
+
+## Install
+
+From the repo root (or within `packages/plugin-mastra`):
+
+```bash
+npm install
+```
+
+Or, if published:
+
+```bash
+npm install @neocortex/plugin-mastra
+```
+
+## Usage
+
+```ts
+import { MastraNeocortexMemory, createNeocortexMastraTools } from "@neocortex/plugin-mastra";
+
+const memory = new MastraNeocortexMemory({
+  token: process.env.ALPHAHUMAN_API_KEY!,
+  baseUrl: process.env.ALPHAHUMAN_BASE_URL, // optional
+  defaultNamespace: "my-app", // optional
+});
+
+// Register these tools in Mastra (or any tool-capable agent framework)
+const tools = memory.getTools();
+```
+
+Mastra-native tools (recommended):
+
+```ts
+import { Agent } from "@mastra/core/agent";
+import { createNeocortexMastraTools } from "@neocortex/plugin-mastra";
+
+const { neocortexSaveMemory, neocortexRecallMemory } = createNeocortexMastraTools({
+  token: process.env.ALPHAHUMAN_API_KEY!,
+  baseUrl: process.env.ALPHAHUMAN_BASE_URL,
+  defaultNamespace: "my-app",
+});
+
+const agent = new Agent({
+  id: "my-agent",
+  name: "My Agent",
+  model: "openai/gpt-5.1",
+  instructions: "Use neocortex tools to save and recall user preferences.",
+  tools: {
+    [neocortexSaveMemory.id]: neocortexSaveMemory,
+    [neocortexRecallMemory.id]: neocortexRecallMemory,
+  },
+});
+```
+
+## Environment variables
+
+- `ALPHAHUMAN_API_KEY` (required): Bearer token for the Alphahuman backend
+- `ALPHAHUMAN_BASE_URL` (optional): Defaults to `https://staging-api.alphahuman.xyz`
+

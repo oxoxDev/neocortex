@@ -1,0 +1,43 @@
+version: 0.0.1
+type: tool
+author: Neocortex
+name: neocortex_memory
+description:
+  en_US: Neocortex memory tools for saving and recalling persistent facts.
+icon: icon.svg
+label:
+  en_US: Neocortex Memory
+created_at: '2025-01-01T00:00:00.000000Z'
+tags:
+  - memory
+meta:
+  version: 0.0.1
+  arch:
+    - amd64
+    - arm64
+  runner:
+    language: python
+    version: '3.12'
+    entrypoint: main
+tool:
+  provider:
+    credentials:
+      - name: alphahuman_api_key
+        type: secret-input
+        required: true
+        label:
+          en_US: Alphahuman API Key
+        placeholder:
+          en_US: Ensure you have an Alphahuman API key.
+      - name: default_namespace
+        type: text-input
+        required: false
+        label:
+          en_US: Default Namespace
+        placeholder:
+          en_US: e.g. "agent_memory", used as fallback if none provided in tool parameters.
+          
+    tools:
+      - tools/save_memory.yaml
+      - tools/recall_memory.yaml
+      - tools/delete_memory.yaml
