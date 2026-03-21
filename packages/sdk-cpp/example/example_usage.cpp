@@ -1,4 +1,4 @@
-#include "tinyhuman/tinyhuman.hpp"
+#include "tinyhumans/tinyhumans.hpp"
 
 #include <chrono>
 #include <iostream>
@@ -12,9 +12,9 @@ int main() {
         return 1;
     }
 
-    using namespace tinyhuman;
+    using namespace tinyhumans;
 
-    TinyHumanMemoryClient client(token);
+    TinyHumansMemoryClient client(token);
     std::string ns = "example-cpp";
 
     // Insert a memory

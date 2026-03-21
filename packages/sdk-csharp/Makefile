@@ -11,6 +11,6 @@ integration-test:
 
 clean:
 	dotnet clean
-	rm -rf src/TinyHuman.Sdk/bin src/TinyHuman.Sdk/obj
-	rm -rf test/TinyHuman.Sdk.Tests/bin test/TinyHuman.Sdk.Tests/obj
-	rm -rf example/TinyHuman.Sdk.Example/bin example/TinyHuman.Sdk.Example/obj
+	rm -rf src/TinyHumans.Sdk/bin src/TinyHumans.Sdk/obj
+	rm -rf test/TinyHumans.Sdk.Tests/bin test/TinyHumans.Sdk.Tests/obj
+	rm -rf example/TinyHumans.Sdk.Example/bin example/TinyHumans.Sdk.Example/obj

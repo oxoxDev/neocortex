@@ -54,9 +54,9 @@ type OpenClawPluginApi = {
 };
 
 const DEFAULTS = {
-    providerId: 'tinyhuman',
+    providerId: 'tinyhumans',
     providerLabel: 'TinyHuman',
-    providerAlias: 'being-tinyhuman',
+    providerAlias: 'being-tinyhumans',
     docsPath: '/providers/models',
     baseUrl: 'http://localhost:3000/openai/v1',
     apiKeyEnvVar: 'TINYHUMANS_API_KEY',
@@ -375,7 +375,7 @@ const plugin = {
         });
 
         api.registerService({
-            id: 'tinyhuman-memory-sync',
+            id: 'tinyhumans-memory-sync',
             start: async ctx => {
                 workspaceDir = ctx.workspaceDir ?? '';
                 statePath = path.join(ctx.stateDir, stateFileName);

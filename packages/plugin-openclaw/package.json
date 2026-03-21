@@ -1,13 +1,13 @@
 {
-    "name": "@tinyhuman/openclaw-model-provider",
+    "name": "@tinyhumans/openclaw-model-provider",
     "version": "0.1.0",
-    "description": "OpenClaw plugin that registers TinyHuman model provider",
+    "description": "OpenClaw plugin that registers TinyHumans model provider",
     "type": "module",
     "keywords": [
         "openclaw",
         "plugin",
         "model-provider",
-        "tinyhuman"
+        "tinyhumans"
     ],
     "license": "UNLICENSED",
     "files": [
@@ -19,7 +19,7 @@
         "openclaw:install": "openclaw plugins install -l .",
         "openclaw:enable": "openclaw plugins enable openclaw-model-provider",
         "openclaw:setup": "openclaw plugins install -l . && openclaw plugins enable openclaw-model-provider",
-        "openclaw:auth": "openclaw models auth login --provider tinyhuman",
+        "openclaw:auth": "openclaw models auth login --provider tinyhumans",
         "lint": "eslint src/",
         "lint:fix": "eslint src/ --fix",
         "format": "prettier --write 'src/**/*.{ts,json}'",

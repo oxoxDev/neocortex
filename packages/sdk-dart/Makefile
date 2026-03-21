@@ -4,7 +4,7 @@ build:
 	dart analyze
 
 test:
-	dart test test/tinyhuman_memory_client_test.dart
+	dart test test/tinyhumans_memory_client_test.dart
 
 integration-test:
 	dart test test/integration_test.dart

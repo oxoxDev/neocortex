@@ -1,7 +1,7 @@
 {
     "id": "openclaw-model-provider",
     "providers": [
-        "tinyhuman"
+        "tinyhumans"
     ],
     "configSchema": {
         "type": "object",

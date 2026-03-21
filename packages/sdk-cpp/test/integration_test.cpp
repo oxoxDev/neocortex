@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "tinyhuman/tinyhuman.hpp"
+#include "tinyhumans/tinyhumans.hpp"
 
 #include <chrono>
 #include <cstdlib>
@@ -7,7 +7,7 @@
 #include <string>
 #include <thread>
 
-using namespace tinyhuman;
+using namespace tinyhumans;
 
 TEST(IntegrationTest, InsertRecallQueryDeleteLifecycle) {
     const char* token_env = std::getenv("TINYHUMANS_TOKEN");
@@ -20,7 +20,7 @@ TEST(IntegrationTest, InsertRecallQueryDeleteLifecycle) {
         std::chrono::system_clock::now().time_since_epoch()).count();
     std::string ns = "integration-test-cpp-" + std::to_string(now_ms);
 
-    TinyHumanMemoryClient client(token);
+    TinyHumansMemoryClient client(token);
 
     // --- Insert ---
     long now_s = static_cast<long>(now_ms / 1000);

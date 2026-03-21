@@ -1,4 +1,4 @@
-# TinyHuman.Sdk (C#)
+# TinyHumans.Sdk (C#)
 
 C# SDK for TinyHumans/TinyHuman Neocortex memory APIs.
 
@@ -27,7 +27,7 @@ export TINYHUMANS_BASE_URL="https://api.tinyhumans.ai"
 
 ## Example (all SDK methods)
 
-`example/TinyHuman.Sdk.Example/Program.cs` exercises every method exposed by this SDK:
+`example/TinyHumans.Sdk.Example/Program.cs` exercises every method exposed by this SDK:
 - `InsertMemoryAsync`
 - `RecallMemoryAsync`
 - `QueryMemoryAsync`
@@ -38,7 +38,7 @@ Run it:
 
 ```bash
 cd packages/sdk-csharp
-dotnet run --project example/TinyHuman.Sdk.Example
+dotnet run --project example/TinyHumans.Sdk.Example
 ```
 
 ## API scope

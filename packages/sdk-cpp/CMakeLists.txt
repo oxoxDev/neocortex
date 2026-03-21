@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(tinyhuman-sdk-cpp VERSION 0.1.0 LANGUAGES CXX)
+project(tinyhumans-sdk-cpp VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -19,16 +19,16 @@ find_package(CURL REQUIRED)
 
 # ---------- Library ----------
 
-add_library(tinyhuman
+add_library(tinyhumans
     src/memory_client.cpp
 )
 
-target_include_directories(tinyhuman PUBLIC
+target_include_directories(tinyhumans PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(tinyhuman
+target_link_libraries(tinyhumans
     PUBLIC  nlohmann_json::nlohmann_json
     PRIVATE CURL::libcurl
 )
@@ -36,7 +36,7 @@ target_link_libraries(tinyhuman
 # ---------- Example ----------
 
 add_executable(example_usage example/example_usage.cpp)
-target_link_libraries(example_usage PRIVATE tinyhuman CURL::libcurl)
+target_link_libraries(example_usage PRIVATE tinyhumans CURL::libcurl)
 
 # ---------- Tests ----------
 

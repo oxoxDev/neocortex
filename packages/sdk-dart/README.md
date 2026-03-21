@@ -1,4 +1,4 @@
-# tinyhuman_sdk (Dart)
+# tinyhumans_sdk (Dart)
 
 Dart SDK for TinyHumans/TinyHuman Neocortex memory APIs.
 
@@ -11,7 +11,7 @@ Dart SDK for TinyHumans/TinyHuman Neocortex memory APIs.
 From pub:
 
 ```bash
-dart pub add tinyhuman_sdk
+dart pub add tinyhumans_sdk
 ```
 
 Or from this repository:

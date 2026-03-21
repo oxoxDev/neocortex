@@ -1,6 +1,6 @@
 import 'dart:io' show Platform;
 
-import 'package:tinyhuman_sdk/tinyhuman_sdk.dart';
+import 'package:tinyhumans_sdk/tinyhumans_sdk.dart';
 
 Future<void> main() async {
   final token = Platform.environment['TINYHUMANS_TOKEN'];
@@ -9,7 +9,7 @@ Future<void> main() async {
     return;
   }
 
-  final client = TinyHumanMemoryClient(token);
+  final client = TinyHumansMemoryClient(token);
 
   try {
     // Insert a memory

@@ -1,4 +1,4 @@
-# tinyhuman-sdk-cpp
+# tinyhumans-sdk-cpp
 
 C++ SDK for TinyHumans/TinyHuman Neocortex memory APIs.
 

@@ -2,7 +2,7 @@ import 'dart:io' show Platform;
 
 import 'package:test/test.dart';
 
-import 'package:tinyhuman_sdk/tinyhuman_sdk.dart';
+import 'package:tinyhumans_sdk/tinyhumans_sdk.dart';
 
 void main() {
   test('insert-recall-query-delete lifecycle', () async {
@@ -14,7 +14,7 @@ void main() {
 
     final ns =
         'integration-test-dart-${DateTime.now().millisecondsSinceEpoch}';
-    final client = TinyHumanMemoryClient(token);
+    final client = TinyHumansMemoryClient(token);
 
     try {
       // ── Insert ──

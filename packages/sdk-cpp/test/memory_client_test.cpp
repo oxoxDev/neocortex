@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "tinyhuman/tinyhuman.hpp"
+#include "tinyhumans/tinyhumans.hpp"
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -11,7 +11,7 @@
 #include <sstream>
 #include <string>
 
-using namespace tinyhuman;
+using namespace tinyhumans;
 
 // ---- MockHttpServer ----
 // Minimal single-connection HTTP server for unit testing.
@@ -119,16 +119,16 @@ private:
 // ---- Constructor tests ----
 
 TEST(MemoryClientTest, ConstructorRejectsEmptyToken) {
-    EXPECT_THROW(TinyHumanMemoryClient(""), std::invalid_argument);
+    EXPECT_THROW(TinyHumansMemoryClient(""), std::invalid_argument);
 }
 
 TEST(MemoryClientTest, ConstructorRejectsWhitespaceToken) {
-    EXPECT_THROW(TinyHumanMemoryClient("   "), std::invalid_argument);
+    EXPECT_THROW(TinyHumansMemoryClient("   "), std::invalid_argument);
 }
 
 TEST(MemoryClientTest, ConstructorAcceptsValidToken) {
     MockHttpServer server;
-    TinyHumanMemoryClient client("test-token", server.base_url());
+    TinyHumansMemoryClient client("test-token", server.base_url());
     // No throw = success
 }
 
@@ -139,7 +139,7 @@ TEST(MemoryClientTest, InsertMemorySendsCorrectRequest) {
     server.set_response(200, R"({"success":true,"data":{"status":"completed","stats":{"chunks":1}}})");
     auto future = server.handle_request_async();
 
-    TinyHumanMemoryClient client("test-token", server.base_url());
+    TinyHumansMemoryClient client("test-token", server.base_url());
     InsertMemoryParams params;
     params.set_title("title").set_content("content").set_namespace("ns");
     auto resp = client.insert_memory(params);
@@ -162,7 +162,7 @@ TEST(MemoryClientTest, InsertMemorySendsCorrectRequest) {
 
 TEST(MemoryClientTest, InsertMemoryValidatesMissingTitle) {
     MockHttpServer server;
-    TinyHumanMemoryClient client("test-token", server.base_url());
+    TinyHumansMemoryClient client("test-token", server.base_url());
     InsertMemoryParams params;
     params.set_content("content").set_namespace("ns");
     EXPECT_THROW(client.insert_memory(params), std::invalid_argument);
@@ -170,7 +170,7 @@ TEST(MemoryClientTest, InsertMemoryValidatesMissingTitle) {
 
 TEST(MemoryClientTest, InsertMemoryValidatesMissingContent) {
     MockHttpServer server;
-    TinyHumanMemoryClient client("test-token", server.base_url());
+    TinyHumansMemoryClient client("test-token", server.base_url());
     InsertMemoryParams params;
     params.set_title("title").set_namespace("ns");
     EXPECT_THROW(client.insert_memory(params), std::invalid_argument);
@@ -178,7 +178,7 @@ TEST(MemoryClientTest, InsertMemoryValidatesMissingContent) {
 
 TEST(MemoryClientTest, InsertMemoryValidatesMissingNamespace) {
     MockHttpServer server;
-    TinyHumanMemoryClient client("test-token", server.base_url());
+    TinyHumansMemoryClient client("test-token", server.base_url());
     InsertMemoryParams params;
     params.set_title("title").set_content("content");
     EXPECT_THROW(client.insert_memory(params), std::invalid_argument);
@@ -191,7 +191,7 @@ TEST(MemoryClientTest, RecallMemoryParsesResponse) {
     server.set_response(200, R"({"success":true,"data":{"cached":false,"llmContextMessage":"ctx","counts":{"numEntities":1}}})");
     auto future = server.handle_request_async();
 
-    TinyHumanMemoryClient client("test-token", server.base_url());
+    TinyHumansMemoryClient client("test-token", server.base_url());
     auto resp = client.recall_memory();
     future.get();
 
@@ -202,7 +202,7 @@ TEST(MemoryClientTest, RecallMemoryParsesResponse) {
 
 TEST(MemoryClientTest, RecallMemoryValidatesMaxChunks) {
     MockHttpServer server;
-    TinyHumanMemoryClient client("test-token", server.base_url());
+    TinyHumansMemoryClient client("test-token", server.base_url());
 
     RecallMemoryParams params;
     params.set_max_chunks(0);
@@ -220,7 +220,7 @@ TEST(MemoryClientTest, DeleteMemoryParsesResponse) {
     server.set_response(200, R"({"success":true,"data":{"nodesDeleted":5,"status":"done","message":"ok"}})");
     auto future = server.handle_request_async();
 
-    TinyHumanMemoryClient client("test-token", server.base_url());
+    TinyHumansMemoryClient client("test-token", server.base_url());
     DeleteMemoryParams params;
     params.set_namespace("test");
     auto resp = client.delete_memory(params);
@@ -239,7 +239,7 @@ TEST(MemoryClientTest, QueryMemoryParsesResponse) {
     server.set_response(200, R"({"success":true,"data":{"cached":true,"llmContextMessage":"answer"}})");
     auto future = server.handle_request_async();
 
-    TinyHumanMemoryClient client("test-token", server.base_url());
+    TinyHumansMemoryClient client("test-token", server.base_url());
     QueryMemoryParams params;
     params.set_query("what?");
     auto resp = client.query_memory(params);
@@ -254,14 +254,14 @@ TEST(MemoryClientTest, QueryMemoryParsesResponse) {
 
 TEST(MemoryClientTest, QueryMemoryValidatesMissingQuery) {
     MockHttpServer server;
-    TinyHumanMemoryClient client("test-token", server.base_url());
+    TinyHumansMemoryClient client("test-token", server.base_url());
     QueryMemoryParams params;
     EXPECT_THROW(client.query_memory(params), std::invalid_argument);
 }
 
 TEST(MemoryClientTest, QueryMemoryValidatesMaxChunksRange) {
     MockHttpServer server;
-    TinyHumanMemoryClient client("test-token", server.base_url());
+    TinyHumansMemoryClient client("test-token", server.base_url());
 
     QueryMemoryParams p1;
     p1.set_query("q").set_max_chunks(0);
@@ -279,7 +279,7 @@ TEST(MemoryClientTest, RecallMemoriesParsesResponse) {
     server.set_response(200, R"({"success":true,"data":{"memories":[{"id":"1","content":"hi"}]}})");
     auto future = server.handle_request_async();
 
-    TinyHumanMemoryClient client("test-token", server.base_url());
+    TinyHumansMemoryClient client("test-token", server.base_url());
     auto resp = client.recall_memories();
     future.get();
 
@@ -290,7 +290,7 @@ TEST(MemoryClientTest, RecallMemoriesParsesResponse) {
 
 TEST(MemoryClientTest, RecallMemoriesValidatesTopK) {
     MockHttpServer server;
-    TinyHumanMemoryClient client("test-token", server.base_url());
+    TinyHumansMemoryClient client("test-token", server.base_url());
 
     RecallMemoriesParams p1;
     p1.set_top_k(0);
@@ -303,7 +303,7 @@ TEST(MemoryClientTest, RecallMemoriesValidatesTopK) {
 
 TEST(MemoryClientTest, RecallMemoriesValidatesMinRetention) {
     MockHttpServer server;
-    TinyHumanMemoryClient client("test-token", server.base_url());
+    TinyHumansMemoryClient client("test-token", server.base_url());
 
     RecallMemoriesParams p;
     p.set_min_retention(-0.1);
@@ -312,32 +312,32 @@ TEST(MemoryClientTest, RecallMemoriesValidatesMinRetention) {
 
 // ---- Error handling ----
 
-TEST(MemoryClientTest, NonOkStatusThrowsTinyHumanError) {
+TEST(MemoryClientTest, NonOkStatusThrowsTinyHumansError) {
     MockHttpServer server;
     server.set_response(401, R"({"error":"unauthorized"})");
     auto future = server.handle_request_async();
 
-    TinyHumanMemoryClient client("test-token", server.base_url());
+    TinyHumansMemoryClient client("test-token", server.base_url());
     try {
         client.recall_memory();
-        FAIL() << "Expected TinyHumanError";
-    } catch (const TinyHumanError& err) {
+        FAIL() << "Expected TinyHumansError";
+    } catch (const TinyHumansError& err) {
         EXPECT_EQ(err.status(), 401);
         EXPECT_EQ(std::string(err.what()), "unauthorized");
     }
     future.get();
 }
 
-TEST(MemoryClientTest, NonJsonResponseThrowsTinyHumanError) {
+TEST(MemoryClientTest, NonJsonResponseThrowsTinyHumansError) {
     MockHttpServer server;
     server.set_response(200, "not json");
     auto future = server.handle_request_async();
 
-    TinyHumanMemoryClient client("test-token", server.base_url());
+    TinyHumansMemoryClient client("test-token", server.base_url());
     try {
         client.recall_memory();
-        FAIL() << "Expected TinyHumanError";
-    } catch (const TinyHumanError& err) {
+        FAIL() << "Expected TinyHumansError";
+    } catch (const TinyHumansError& err) {
         EXPECT_EQ(err.status(), 200);
         EXPECT_TRUE(std::string(err.what()).find("non-JSON") != std::string::npos);
     }
@@ -349,13 +349,13 @@ TEST(MemoryClientTest, ServerErrorThrowsWithHttpStatus) {
     server.set_response(500, R"({"success":false})");
     auto future = server.handle_request_async();
 
-    TinyHumanMemoryClient client("test-token", server.base_url());
+    TinyHumansMemoryClient client("test-token", server.base_url());
     try {
         InsertMemoryParams params;
         params.set_title("t").set_content("c").set_namespace("n");
         client.insert_memory(params);
-        FAIL() << "Expected TinyHumanError";
-    } catch (const TinyHumanError& err) {
+        FAIL() << "Expected TinyHumansError";
+    } catch (const TinyHumansError& err) {
         EXPECT_EQ(err.status(), 500);
         EXPECT_TRUE(std::string(err.what()).find("500") != std::string::npos);
     }

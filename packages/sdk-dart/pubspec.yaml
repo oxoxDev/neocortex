@@ -1,5 +1,5 @@
-name: tinyhuman_sdk
-description: Dart SDK for the TinyHuman Memory API.
+name: tinyhumans_sdk
+description: Dart SDK for the TinyHumans Memory API.
 version: 0.1.0
 
 environment:

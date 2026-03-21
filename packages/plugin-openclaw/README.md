@@ -4,7 +4,7 @@ Connect any TinyHuman backend — hosted or local — to OpenClaw as a model pro
 
 The plugin:
 
-- Registers `tinyhuman/neocortex-mk1` as a model in OpenClaw
+- Registers `tinyhumans/neocortex-mk1` as a model in OpenClaw
 - Syncs workspace memory (MEMORY.md, memory/\*.md) to your backend after every agent run
 
 ---
@@ -22,7 +22,7 @@ Requires OpenClaw `>= 2026.2.0`.
 ### 2. Install and enable the plugin
 
 ```bash
-openclaw plugins install -l ./openclaw-plugin-tinyhuman-model
+openclaw plugins install -l ./openclaw-plugin-tinyhumans-model
 openclaw plugins enable openclaw-model-provider
 ```
 
@@ -31,7 +31,7 @@ openclaw plugins enable openclaw-model-provider
 This is the easiest way to set up — it asks for your backend URL and token, then writes the config automatically:
 
 ```bash
-openclaw models auth login --provider tinyhuman
+openclaw models auth login --provider tinyhumans
 ```
 
 You will be prompted for:
@@ -61,7 +61,7 @@ openclaw gateway &
 openclaw agent --agent main --message "Hello"
 ```
 
-You should see `tinyhuman/neocortex-mk1` in `openclaw models list` and get a reply.
+You should see `tinyhumans/neocortex-mk1` in `openclaw models list` and get a reply.
 
 ---
 
@@ -74,7 +74,7 @@ The backend accepts a **JWT** (expires in 30 days) or a **permanent API key** as
 From the backend repo root, run the token generator. It looks up or creates a user by Telegram ID and prints a 30-day JWT:
 
 ```bash
-cd /path/to/backend-tinyhuman
+cd /path/to/backend-tinyhumans
 yarn run:dev src/scripts/generateUserToken.ts YOUR_TELEGRAM_ID
 ```
 
@@ -133,7 +133,7 @@ If you prefer to configure manually, create or edit `~/.openclaw/openclaw.json`:
   "gateway": { "mode": "local" },
   "agents": {
     "defaults": {
-      "model": { "primary": "tinyhuman/neocortex-mk1" },
+      "model": { "primary": "tinyhumans/neocortex-mk1" },
       "workspace": "~/.openclaw/workspace",
       "compaction": {
         "mode": "safeguard",
@@ -149,7 +149,7 @@ If you prefer to configure manually, create or edit `~/.openclaw/openclaw.json`:
   "models": {
     "mode": "merge",
     "providers": {
-      "tinyhuman": {
+      "tinyhumans": {
         "baseUrl": "https://api.tinyhumans.ai/openai/v1",
         "apiKey": "${TINYHUMANS_API_KEY}",
         "api": "openai-completions",
@@ -187,7 +187,7 @@ If you prefer to configure manually, create or edit `~/.openclaw/openclaw.json`:
   },
   "tools": {
     "profile": "coding",
-    "byProvider": { "tinyhuman": { "profile": "coding", "allow": ["group:fs", "group:memory"] } }
+    "byProvider": { "tinyhumans": { "profile": "coding", "allow": ["group:fs", "group:memory"] } }
   }
 }
 ```
@@ -204,11 +204,11 @@ Replace `https://api.tinyhumans.ai` with your actual backend URL.
 | `Missing env var "TINYHUMANS_API_KEY"`      | Add `TINYHUMANS_API_KEY=<token>` to `~/.openclaw/.env`                                                                      |
 | `HTTP 401: "Invalid token"`                 | Token is wrong or user not in DB — generate a new one with `yarn run:dev src/scripts/generateUserToken.ts`                  |
 | Token works in curl but not in OpenClaw     | Also run `export TINYHUMANS_API_KEY=<token>` in the same shell — OpenClaw may not load `~/.openclaw/.env` in all cases      |
-| `Unknown model: tinyhuman/neocortex-mk1`   | Run `openclaw models auth login --provider tinyhuman` or add `models.providers.tinyhuman` to config, then restart gateway |
+| `Unknown model: tinyhumans/neocortex-mk1`   | Run `openclaw models auth login --provider tinyhumans` or add `models.providers.tinyhumans` to config, then restart gateway |
 | `openclaw models list` shows only anthropic | Start the gateway: `openclaw gateway`                                                                                       |
 | `Gateway service not loaded` on restart     | Use `openclaw gateway` (foreground) or run `openclaw gateway install` first                                                 |
-| MEMORY.md not syncing                       | Ensure `tools.byProvider.tinyhuman` includes `group:fs` and `group:memory`                                                 |
-| Backend not receiving requests              | Check gateway is running, `TINYHUMANS_API_KEY` is set, and `models.providers.tinyhuman` points to the right URL            |
+| MEMORY.md not syncing                       | Ensure `tools.byProvider.tinyhumans` includes `group:fs` and `group:memory`                                                 |
+| Backend not receiving requests              | Check gateway is running, `TINYHUMANS_API_KEY` is set, and `models.providers.tinyhumans` points to the right URL            |
 
 ### Verify backend is receiving requests
 
@@ -241,7 +241,7 @@ mongosh <your-db-name> --eval 'db.openclawmemories.find({ userId: ObjectId("<use
 
 ## What this plugin does
 
-- Registers provider `tinyhuman` and model `tinyhuman/neocortex-mk1` in OpenClaw
+- Registers provider `tinyhumans` and model `tinyhumans/neocortex-mk1` in OpenClaw
 - Uses OpenAI-compatible transport (`openai-completions`)
 - Syncs `MEMORY.md` and `memory/**/*.md` to your backend on startup and after each agent run
 - Uses hash-based idempotency — only changed files are uploaded
