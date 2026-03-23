@@ -16,14 +16,26 @@ import (
 type Client struct {
 	baseURL string
 	token   string
+	modelID string
 	http    *http.Client
 }
 
-// NewClient creates a new TinyHumans client.
+// NewClient creates a new TinyHumans client with the default model ID.
 // token is required. baseURL is optional (uses env var or default).
 func NewClient(token string, baseURL ...string) (*Client, error) {
+	return NewClientWithModelID(token, "", baseURL...)
+}
+
+// NewClientWithModelID creates a new TinyHumans client with a custom model ID.
+// token is required. modelID defaults to "neocortex-mk1" if empty.
+// baseURL is optional (uses env var or default).
+func NewClientWithModelID(token, modelID string, baseURL ...string) (*Client, error) {
 	if strings.TrimSpace(token) == "" {
 		return nil, errors.New("token is required")
+	}
+
+	if modelID == "" {
+		modelID = DefaultModelID
 	}
 
 	resolved := ""
@@ -41,6 +53,7 @@ func NewClient(token string, baseURL ...string) (*Client, error) {
 	return &Client{
 		baseURL: resolved,
 		token:   token,
+		modelID: modelID,
 		http:    &http.Client{Timeout: 30 * time.Second},
 	}, nil
 }
@@ -251,6 +264,7 @@ func (c *Client) send(method, path string, body map[string]interface{}) (map[str
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.token)
+	req.Header.Set("X-Model-Id", c.modelID)
 
 	resp, err := c.http.Do(req)
 	if err != nil {

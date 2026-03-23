@@ -7,6 +7,9 @@ const (
 
 	// BaseURLEnv is the environment variable name for overriding the base URL.
 	BaseURLEnv = "TINYHUMANS_BASE_URL"
+
+	// DefaultModelID is the default model identifier sent with every request.
+	DefaultModelID = "neocortex-mk1"
 )
 
 // MemoryItem represents a single memory item to ingest.

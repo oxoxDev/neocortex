@@ -72,6 +72,49 @@ func TestNewClient_ParamOverridesEnv(t *testing.T) {
 	}
 }
 
+func TestNewClient_DefaultModelID(t *testing.T) {
+	c, err := NewClient("tok")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if c.modelID != DefaultModelID {
+		t.Errorf("modelID = %q, want %q", c.modelID, DefaultModelID)
+	}
+}
+
+func TestNewClientWithModelID(t *testing.T) {
+	c, err := NewClientWithModelID("tok", "custom-model")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if c.modelID != "custom-model" {
+		t.Errorf("modelID = %q, want custom-model", c.modelID)
+	}
+}
+
+func TestNewClientWithModelID_EmptyDefaultsToNeocortex(t *testing.T) {
+	c, err := NewClientWithModelID("tok", "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if c.modelID != DefaultModelID {
+		t.Errorf("modelID = %q, want %q", c.modelID, DefaultModelID)
+	}
+}
+
+func TestSend_XModelIdHeader(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got := r.Header.Get("X-Model-Id"); got != DefaultModelID {
+			t.Errorf("X-Model-Id = %q, want %q", got, DefaultModelID)
+		}
+		w.Write([]byte(`{"data":{}}`))
+	}))
+	defer server.Close()
+
+	c := testClient(t, server)
+	c.send("POST", "/test", map[string]interface{}{})
+}
+
 // --- Helper to create a client pointing at a test server ---
 
 func testClient(t *testing.T, server *httptest.Server) *Client {
