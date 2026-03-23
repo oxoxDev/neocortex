@@ -580,3 +580,177 @@ func TestDeleteDocument_EmptyNamespace(t *testing.T) {
 		t.Fatal("expected error for empty namespace")
 	}
 }
+
+// --- GetGraphSnapshot ---
+
+func TestGetGraphSnapshot_Success(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			t.Errorf("method = %s, want GET", r.Method)
+		}
+		if r.URL.Path != "/memory/admin/graph-snapshot" {
+			t.Errorf("path = %s", r.URL.Path)
+		}
+		if r.URL.Query().Get("namespace") != "ns1" {
+			t.Errorf("namespace = %q", r.URL.Query().Get("namespace"))
+		}
+		if r.URL.Query().Get("mode") != "master" {
+			t.Errorf("mode = %q", r.URL.Query().Get("mode"))
+		}
+		w.Write([]byte(`{"data":{"nodes":[]}}`))
+	}))
+	defer server.Close()
+
+	c := testClient(t, server)
+	data, err := c.GetGraphSnapshot(&GraphSnapshotOptions{Namespace: "ns1", Mode: "master"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if data["nodes"] == nil {
+		t.Error("expected nodes in response")
+	}
+}
+
+func TestGetGraphSnapshot_NilOpts(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.RawQuery != "" {
+			t.Errorf("expected no query params, got %q", r.URL.RawQuery)
+		}
+		w.Write([]byte(`{"data":{}}`))
+	}))
+	defer server.Close()
+
+	c := testClient(t, server)
+	_, err := c.GetGraphSnapshot(nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// --- SyncMemory ---
+
+func TestSyncMemory_Success(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/memory/sync" {
+			t.Errorf("path = %s, want /memory/sync", r.URL.Path)
+		}
+		if r.Method != "POST" {
+			t.Errorf("method = %s, want POST", r.Method)
+		}
+		var body map[string]interface{}
+		json.NewDecoder(r.Body).Decode(&body)
+		if body["workspaceId"] != "ws1" {
+			t.Errorf("workspaceId = %v", body["workspaceId"])
+		}
+		w.Write([]byte(`{"data":{"synced":true}}`))
+	}))
+	defer server.Close()
+
+	c := testClient(t, server)
+	data, err := c.SyncMemory(&SyncMemoryOptions{WorkspaceID: "ws1", AgentID: "agent1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if data["synced"] != true {
+		t.Errorf("synced = %v", data["synced"])
+	}
+}
+
+// --- GetIngestionJob ---
+
+func TestGetIngestionJob_Success(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			t.Errorf("method = %s, want GET", r.Method)
+		}
+		if r.URL.Path != "/memory/ingestion/jobs/job-123" {
+			t.Errorf("path = %s", r.URL.Path)
+		}
+		w.Write([]byte(`{"data":{"status":"completed","jobId":"job-123"}}`))
+	}))
+	defer server.Close()
+
+	c := testClient(t, server)
+	data, err := c.GetIngestionJob("job-123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if data["status"] != "completed" {
+		t.Errorf("status = %v", data["status"])
+	}
+}
+
+func TestGetIngestionJob_EmptyID(t *testing.T) {
+	c, _ := NewClient("tok")
+	_, err := c.GetIngestionJob("")
+	if err == nil {
+		t.Fatal("expected error for empty job_id")
+	}
+}
+
+// --- WaitForIngestionJob ---
+
+func TestWaitForIngestionJob_Completed(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"data":{"status":"completed","jobId":"job-1"}}`))
+	}))
+	defer server.Close()
+
+	c := testClient(t, server)
+	data, err := c.WaitForIngestionJob("job-1", nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if data["status"] != "completed" {
+		t.Errorf("status = %v", data["status"])
+	}
+}
+
+func TestWaitForIngestionJob_Failed(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"data":{"status":"failed","error":"parse error"}}`))
+	}))
+	defer server.Close()
+
+	c := testClient(t, server)
+	_, err := c.WaitForIngestionJob("job-1", nil)
+	if err == nil {
+		t.Fatal("expected error for failed job")
+	}
+	tErr, ok := err.(*TinyHumansError)
+	if !ok {
+		t.Fatalf("expected TinyHumansError, got %T", err)
+	}
+	if tErr.Message != "parse error" {
+		t.Errorf("message = %q", tErr.Message)
+	}
+}
+
+func TestWaitForIngestionJob_Timeout(t *testing.T) {
+	callCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount++
+		w.Write([]byte(`{"data":{"status":"processing"}}`))
+	}))
+	defer server.Close()
+
+	c := testClient(t, server)
+	_, err := c.WaitForIngestionJob("job-1", &WaitForIngestionJobOptions{
+		TimeoutSeconds:      0.5,
+		PollIntervalSeconds: 0.1,
+	})
+	if err == nil {
+		t.Fatal("expected timeout error")
+	}
+	if callCount < 2 {
+		t.Errorf("expected multiple poll attempts, got %d", callCount)
+	}
+}
+
+func TestWaitForIngestionJob_EmptyID(t *testing.T) {
+	c, _ := NewClient("tok")
+	_, err := c.WaitForIngestionJob("", nil)
+	if err == nil {
+		t.Fatal("expected error for empty job_id")
+	}
+}

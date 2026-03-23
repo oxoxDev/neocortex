@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"time"
 )
 
 // ChatMemory sends a chat request with memory context.
@@ -302,4 +303,107 @@ func (c *Client) DeleteDocument(documentID, namespace string) (map[string]interf
 
 	path := fmt.Sprintf("/memory/documents/%s", url.PathEscape(documentID))
 	return c.sendDelete(path, map[string]string{"namespace": namespace})
+}
+
+// GetGraphSnapshot retrieves an admin graph snapshot.
+// GET /memory/admin/graph-snapshot
+func (c *Client) GetGraphSnapshot(opts *GraphSnapshotOptions) (map[string]interface{}, error) {
+	params := map[string]string{}
+	if opts != nil {
+		if opts.Namespace != "" {
+			params["namespace"] = opts.Namespace
+		}
+		if opts.Mode != "" {
+			params["mode"] = opts.Mode
+		}
+		if opts.Limit != nil {
+			params["limit"] = strconv.Itoa(*opts.Limit)
+		}
+		if opts.SeedLimit != nil {
+			params["seed_limit"] = strconv.Itoa(*opts.SeedLimit)
+		}
+	}
+
+	return c.sendGet("/memory/admin/graph-snapshot", params)
+}
+
+// SyncMemory syncs memory files (backend-specific).
+// POST /memory/sync
+func (c *Client) SyncMemory(opts *SyncMemoryOptions) (map[string]interface{}, error) {
+	body := map[string]interface{}{}
+	if opts != nil {
+		if opts.WorkspaceID != "" {
+			body["workspaceId"] = opts.WorkspaceID
+		}
+		if opts.AgentID != "" {
+			body["agentId"] = opts.AgentID
+		}
+	}
+
+	return c.send("POST", "/memory/sync", body)
+}
+
+// GetIngestionJob retrieves the status of a memory ingestion job.
+// GET /memory/ingestion/jobs/{jobId}
+func (c *Client) GetIngestionJob(jobID string) (map[string]interface{}, error) {
+	if jobID == "" {
+		return nil, errors.New("job_id is required")
+	}
+
+	path := fmt.Sprintf("/memory/ingestion/jobs/%s", url.PathEscape(jobID))
+	return c.sendGet(path, nil)
+}
+
+// WaitForIngestionJob polls an ingestion job until it reaches a terminal state.
+// Returns the final job data or an error if the job fails or times out.
+func (c *Client) WaitForIngestionJob(jobID string, opts *WaitForIngestionJobOptions) (map[string]interface{}, error) {
+	if jobID == "" {
+		return nil, errors.New("job_id is required")
+	}
+
+	timeout := 30.0
+	interval := 1.0
+	if opts != nil {
+		if opts.TimeoutSeconds > 0 {
+			timeout = opts.TimeoutSeconds
+		}
+		if opts.PollIntervalSeconds > 0 {
+			interval = opts.PollIntervalSeconds
+		}
+	}
+
+	deadline := time.Now().Add(time.Duration(timeout * float64(time.Second)))
+
+	for {
+		data, err := c.GetIngestionJob(jobID)
+		if err != nil {
+			return nil, err
+		}
+
+		status := strVal(data, "status")
+		switch status {
+		case "completed":
+			return data, nil
+		case "failed":
+			msg := strVal(data, "error")
+			if msg == "" {
+				msg = "ingestion job failed"
+			}
+			return nil, &TinyHumansError{
+				Message: msg,
+				Status:  0,
+				Body:    data,
+			}
+		}
+
+		if time.Now().After(deadline) {
+			return nil, &TinyHumansError{
+				Message: fmt.Sprintf("ingestion job %s timed out after %.0fs (status: %s)", jobID, timeout, status),
+				Status:  0,
+				Body:    data,
+			}
+		}
+
+		time.Sleep(time.Duration(interval * float64(time.Second)))
+	}
 }
