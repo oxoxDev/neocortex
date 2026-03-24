@@ -92,6 +92,54 @@ public class TinyHumansMemoryClient implements AutoCloseable {
         return RecallMemoriesResponse.fromMap(response);
     }
 
+    /** Get admin graph snapshot. GET /memory/admin/graph-snapshot */
+    public Map<String, Object> getGraphSnapshot(GraphSnapshotParams params) {
+        return sendGet("/memory/admin/graph-snapshot", params != null ? params.toQueryParams() : null);
+    }
+
+    /** Get ingestion job status. GET /memory/ingestion/jobs/{jobId} */
+    public Map<String, Object> getIngestionJob(String jobId) {
+        if (jobId == null || jobId.isEmpty()) {
+            throw new IllegalArgumentException("jobId is required");
+        }
+        return sendGet("/memory/ingestion/jobs/" + jobId, null);
+    }
+
+    /** Poll an ingestion job until it reaches a terminal state. */
+    public Map<String, Object> waitForIngestionJob(String jobId, WaitForIngestionJobOptions opts) {
+        if (jobId == null || jobId.isEmpty()) {
+            throw new IllegalArgumentException("jobId is required");
+        }
+        double timeout = (opts != null) ? opts.getTimeoutSeconds() : 30.0;
+        double interval = (opts != null) ? opts.getPollIntervalSeconds() : 1.0;
+        long deadline = System.currentTimeMillis() + (long) (timeout * 1000);
+
+        while (true) {
+            Map<String, Object> result = getIngestionJob(jobId);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> data = (Map<String, Object>) result.get("data");
+            if (data != null) {
+                Object state = data.get("state");
+                if (state instanceof String) {
+                    String s = ((String) state).toLowerCase();
+                    if (s.equals("completed") || s.equals("succeeded") || s.equals("done")
+                            || s.equals("failed") || s.equals("error") || s.equals("cancelled")) {
+                        return result;
+                    }
+                }
+            }
+            if (System.currentTimeMillis() >= deadline) {
+                throw new TinyHumansError("Ingestion job " + jobId + " timed out after " + timeout + "s", 0, result);
+            }
+            try {
+                Thread.sleep((long) (interval * 1000));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Interrupted while waiting for ingestion job", e);
+            }
+        }
+    }
+
     /** Insert a document. POST /memory/documents */
     public Map<String, Object> insertDocument(InsertDocumentParams params) {
         return post("/memory/documents", params.toMap());

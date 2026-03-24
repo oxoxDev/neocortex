@@ -341,6 +341,126 @@ class TinyHumansMemoryClientTest {
         }
     }
 
+    // ---- getGraphSnapshot ----
+
+    @Test
+    void getGraphSnapshotSuccess() {
+        server.createContext("/memory/admin/graph-snapshot", exchange -> {
+            assertEquals("GET", exchange.getRequestMethod());
+            assertTrue(exchange.getRequestURI().getQuery().contains("namespace=ns"));
+            assertTrue(exchange.getRequestURI().getQuery().contains("mode=full"));
+            String response = "{\"data\":{\"nodes\":[]}}";
+            exchange.sendResponseHeaders(200, response.length());
+            try (OutputStream os = exchange.getResponseBody()) { os.write(response.getBytes(StandardCharsets.UTF_8)); }
+        });
+
+        try (TinyHumansMemoryClient client = new TinyHumansMemoryClient("tok", baseUrl)) {
+            Map<String, Object> resp = client.getGraphSnapshot(
+                    new GraphSnapshotParams().setNamespace("ns").setMode("full"));
+            assertNotNull(resp);
+        }
+    }
+
+    @Test
+    void getGraphSnapshotNullParams() {
+        server.createContext("/memory/admin/graph-snapshot", exchange -> {
+            assertNull(exchange.getRequestURI().getQuery());
+            String response = "{\"data\":{}}";
+            exchange.sendResponseHeaders(200, response.length());
+            try (OutputStream os = exchange.getResponseBody()) { os.write(response.getBytes(StandardCharsets.UTF_8)); }
+        });
+
+        try (TinyHumansMemoryClient client = new TinyHumansMemoryClient("tok", baseUrl)) {
+            client.getGraphSnapshot(null);
+        }
+    }
+
+    // ---- getIngestionJob ----
+
+    @Test
+    void getIngestionJobSuccess() {
+        server.createContext("/memory/ingestion/jobs/j1", exchange -> {
+            assertEquals("GET", exchange.getRequestMethod());
+            String response = "{\"data\":{\"state\":\"completed\"}}";
+            exchange.sendResponseHeaders(200, response.length());
+            try (OutputStream os = exchange.getResponseBody()) { os.write(response.getBytes(StandardCharsets.UTF_8)); }
+        });
+
+        try (TinyHumansMemoryClient client = new TinyHumansMemoryClient("tok", baseUrl)) {
+            Map<String, Object> resp = client.getIngestionJob("j1");
+            assertNotNull(resp.get("data"));
+        }
+    }
+
+    @Test
+    void getIngestionJobRejectsEmptyId() {
+        try (TinyHumansMemoryClient client = new TinyHumansMemoryClient("tok", baseUrl)) {
+            assertThrows(IllegalArgumentException.class, () ->
+                    client.getIngestionJob(""));
+        }
+    }
+
+    // ---- waitForIngestionJob ----
+
+    @Test
+    void waitForIngestionJobCompleted() {
+        server.createContext("/memory/ingestion/jobs/j1", exchange -> {
+            String response = "{\"data\":{\"state\":\"completed\"}}";
+            exchange.sendResponseHeaders(200, response.length());
+            try (OutputStream os = exchange.getResponseBody()) { os.write(response.getBytes(StandardCharsets.UTF_8)); }
+        });
+
+        try (TinyHumansMemoryClient client = new TinyHumansMemoryClient("tok", baseUrl)) {
+            Map<String, Object> resp = client.waitForIngestionJob("j1", null);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> data = (Map<String, Object>) resp.get("data");
+            assertEquals("completed", data.get("state"));
+        }
+    }
+
+    @Test
+    void waitForIngestionJobFailed() {
+        server.createContext("/memory/ingestion/jobs/j2", exchange -> {
+            String response = "{\"data\":{\"state\":\"failed\",\"error\":\"bad\"}}";
+            exchange.sendResponseHeaders(200, response.length());
+            try (OutputStream os = exchange.getResponseBody()) { os.write(response.getBytes(StandardCharsets.UTF_8)); }
+        });
+
+        try (TinyHumansMemoryClient client = new TinyHumansMemoryClient("tok", baseUrl)) {
+            Map<String, Object> resp = client.waitForIngestionJob("j2", null);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> data = (Map<String, Object>) resp.get("data");
+            assertEquals("failed", data.get("state"));
+        }
+    }
+
+    @Test
+    void waitForIngestionJobTimeout() {
+        final int[] callCount = {0};
+        server.createContext("/memory/ingestion/jobs/j3", exchange -> {
+            callCount[0]++;
+            String response = "{\"data\":{\"state\":\"pending\"}}";
+            exchange.sendResponseHeaders(200, response.length());
+            try (OutputStream os = exchange.getResponseBody()) { os.write(response.getBytes(StandardCharsets.UTF_8)); }
+        });
+
+        try (TinyHumansMemoryClient client = new TinyHumansMemoryClient("tok", baseUrl)) {
+            WaitForIngestionJobOptions opts = new WaitForIngestionJobOptions()
+                    .setTimeoutSeconds(0.5).setPollIntervalSeconds(0.1);
+            assertThrows(TinyHumansError.class, () ->
+                    client.waitForIngestionJob("j3", opts));
+            assertTrue(callCount[0] >= 2, "expected multiple poll attempts");
+        }
+    }
+
+    @Test
+    void waitForIngestionJobRejectsEmptyId() {
+        try (TinyHumansMemoryClient client = new TinyHumansMemoryClient("tok", baseUrl)) {
+            assertThrows(IllegalArgumentException.class, () ->
+                    client.waitForIngestionJob("", null));
+        }
+    }
+
     // ---- insertDocument ----
 
     @Test
