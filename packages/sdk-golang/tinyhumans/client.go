@@ -100,7 +100,7 @@ func (c *Client) IngestMemories(items []MemoryItem) (*IngestMemoryResponse, erro
 			body["updatedAt"] = *item.UpdatedAt
 		}
 
-		data, err := c.send("POST", "/v1/memory/insert", body)
+		data, err := c.send("POST", "/memory/insert", body)
 		if err != nil {
 			errCount++
 			continue
@@ -136,7 +136,7 @@ func (c *Client) RecallMemory(namespace, prompt string, opts *RecallMemoryOption
 		"maxChunks": numChunks,
 	}
 
-	data, err := c.send("POST", "/v1/memory/recall", body)
+	data, err := c.send("POST", "/memory/recall", body)
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +205,7 @@ func (c *Client) DeleteMemory(namespace string, opts *DeleteMemoryOptions) (*Del
 		"namespace": namespace,
 	}
 
-	data, err := c.send("POST", "/v1/memory/admin/delete", body)
+	data, err := c.send("POST", "/memory/admin/delete", body)
 	if err != nil {
 		return nil, err
 	}

@@ -212,7 +212,7 @@ func TestSendDelete_QueryParams(t *testing.T) {
 
 func TestIngestMemory_Completed(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/v1/memory/insert" {
+		if r.URL.Path != "/memory/insert" {
 			t.Errorf("unexpected path: %s", r.URL.Path)
 		}
 		if r.Header.Get("Authorization") != "Bearer test-token" {
@@ -503,7 +503,7 @@ func TestRecallMemory_DefaultNumChunks(t *testing.T) {
 
 func TestDeleteMemory_WithNodesDeleted(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/v1/memory/admin/delete" {
+		if r.URL.Path != "/memory/admin/delete" {
 			t.Errorf("unexpected path: %s", r.URL.Path)
 		}
 		w.Write([]byte(jsonResponse(map[string]interface{}{"nodesDeleted": 5})))
