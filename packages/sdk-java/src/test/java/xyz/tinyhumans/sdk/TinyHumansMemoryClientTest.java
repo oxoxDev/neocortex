@@ -56,7 +56,7 @@ class TinyHumansMemoryClientTest {
 
     @Test
     void insertMemorySendsCorrectRequest() {
-        server.createContext("/v1/memory/insert", exchange -> {
+        server.createContext("/memory/insert", exchange -> {
             // Verify headers
             assertEquals("application/json", exchange.getRequestHeaders().getFirst("Content-Type"));
             assertTrue(exchange.getRequestHeaders().getFirst("Authorization").startsWith("Bearer "));
@@ -110,7 +110,7 @@ class TinyHumansMemoryClientTest {
 
     @Test
     void recallMemoryParsesResponse() {
-        server.createContext("/v1/memory/recall", exchange -> {
+        server.createContext("/memory/recall", exchange -> {
             String response = "{\"success\":true,\"data\":{\"cached\":false,\"llmContextMessage\":\"ctx\",\"counts\":{\"numEntities\":1}}}";
             exchange.sendResponseHeaders(200, response.length());
             try (OutputStream os = exchange.getResponseBody()) {
@@ -141,7 +141,7 @@ class TinyHumansMemoryClientTest {
 
     @Test
     void deleteMemoryParsesResponse() {
-        server.createContext("/v1/memory/admin/delete", exchange -> {
+        server.createContext("/memory/admin/delete", exchange -> {
             String response = "{\"success\":true,\"data\":{\"nodesDeleted\":5,\"status\":\"done\",\"message\":\"ok\"}}";
             exchange.sendResponseHeaders(200, response.length());
             try (OutputStream os = exchange.getResponseBody()) {
@@ -162,7 +162,7 @@ class TinyHumansMemoryClientTest {
 
     @Test
     void queryMemoryParsesResponse() {
-        server.createContext("/v1/memory/query", exchange -> {
+        server.createContext("/memory/query", exchange -> {
             String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
             assertTrue(body.contains("\"query\""));
 
@@ -203,7 +203,7 @@ class TinyHumansMemoryClientTest {
 
     @Test
     void recallMemoriesParsesResponse() {
-        server.createContext("/v1/memory/memories/recall", exchange -> {
+        server.createContext("/memory/memories/recall", exchange -> {
             String response = "{\"success\":true,\"data\":{\"memories\":[{\"id\":\"1\",\"content\":\"hi\"}]}}";
             exchange.sendResponseHeaders(200, response.length());
             try (OutputStream os = exchange.getResponseBody()) {
@@ -241,7 +241,7 @@ class TinyHumansMemoryClientTest {
 
     @Test
     void nonOkStatusThrowsTinyHumansError() {
-        server.createContext("/v1/memory/recall", exchange -> {
+        server.createContext("/memory/recall", exchange -> {
             String response = "{\"error\":\"unauthorized\"}";
             exchange.sendResponseHeaders(401, response.length());
             try (OutputStream os = exchange.getResponseBody()) {
@@ -259,7 +259,7 @@ class TinyHumansMemoryClientTest {
 
     @Test
     void nonJsonResponseThrowsTinyHumansError() {
-        server.createContext("/v1/memory/recall", exchange -> {
+        server.createContext("/memory/recall", exchange -> {
             String response = "not json";
             exchange.sendResponseHeaders(200, response.length());
             try (OutputStream os = exchange.getResponseBody()) {
@@ -277,7 +277,7 @@ class TinyHumansMemoryClientTest {
 
     @Test
     void serverErrorThrowsWithHttpStatus() {
-        server.createContext("/v1/memory/insert", exchange -> {
+        server.createContext("/memory/insert", exchange -> {
             String response = "{\"success\":false}";
             exchange.sendResponseHeaders(500, response.length());
             try (OutputStream os = exchange.getResponseBody()) {

@@ -47,38 +47,38 @@ public class TinyHumansMemoryClient implements AutoCloseable {
                 .build();
     }
 
-    /** Insert (ingest) a document into memory. POST /v1/memory/insert */
+    /** Insert (ingest) a document into memory. POST /memory/insert */
     public InsertMemoryResponse insertMemory(InsertMemoryParams params) {
         Map<String, Object> body = params.toMap();
-        Map<String, Object> response = post("/v1/memory/insert", body);
+        Map<String, Object> response = post("/memory/insert", body);
         return InsertMemoryResponse.fromMap(response);
     }
 
-    /** Recall context from Master node. POST /v1/memory/recall */
+    /** Recall context from Master node. POST /memory/recall */
     public RecallMemoryResponse recallMemory(RecallMemoryParams params) {
         Map<String, Object> body = params.toMap();
-        Map<String, Object> response = post("/v1/memory/recall", body);
+        Map<String, Object> response = post("/memory/recall", body);
         return RecallMemoryResponse.fromMap(response);
     }
 
-    /** Delete memory (admin). POST /v1/memory/admin/delete */
+    /** Delete memory (admin). POST /memory/admin/delete */
     public DeleteMemoryResponse deleteMemory(DeleteMemoryParams params) {
         Map<String, Object> body = params.toMap();
-        Map<String, Object> response = post("/v1/memory/admin/delete", body);
+        Map<String, Object> response = post("/memory/admin/delete", body);
         return DeleteMemoryResponse.fromMap(response);
     }
 
-    /** Query memory via RAG. POST /v1/memory/query */
+    /** Query memory via RAG. POST /memory/query */
     public QueryMemoryResponse queryMemory(QueryMemoryParams params) {
         Map<String, Object> body = params.toMap();
-        Map<String, Object> response = post("/v1/memory/query", body);
+        Map<String, Object> response = post("/memory/query", body);
         return QueryMemoryResponse.fromMap(response);
     }
 
-    /** Recall memories from Ebbinghaus bank. POST /v1/memory/memories/recall */
+    /** Recall memories from Ebbinghaus bank. POST /memory/memories/recall */
     public RecallMemoriesResponse recallMemories(RecallMemoriesParams params) {
         Map<String, Object> body = params.toMap();
-        Map<String, Object> response = post("/v1/memory/memories/recall", body);
+        Map<String, Object> response = post("/memory/memories/recall", body);
         return RecallMemoriesResponse.fromMap(response);
     }
 
