@@ -422,7 +422,7 @@ TEST(MemoryClientTest, InteractMemorySendsCorrectRequest) {
     client.interact_memory(params);
 
     std::string body = future.get();
-    EXPECT_TRUE(body.find("\"entities\"") != std::string::npos);
+    EXPECT_TRUE(body.find("\"entityNames\"") != std::string::npos);
     EXPECT_EQ(server.last_path(), "/memory/interact");
 }
 
@@ -538,7 +538,7 @@ TEST(MemoryClientTest, InsertDocumentsBatchSendsCorrectRequest) {
     client.insert_documents_batch(params);
 
     std::string body = future.get();
-    EXPECT_TRUE(body.find("\"documents\"") != std::string::npos);
+    EXPECT_TRUE(body.find("\"items\"") != std::string::npos);
     EXPECT_EQ(server.last_path(), "/memory/documents/batch");
 }
 

@@ -302,7 +302,7 @@ struct InteractMemoryParams {
         validate();
         json j;
         j["namespace"] = namespace_;
-        j["entities"] = entities;
+        j["entityNames"] = entities;
         return j;
     }
 };
@@ -396,7 +396,7 @@ struct InsertDocumentsBatchParams {
         for (const auto& doc : documents) {
             docs.push_back(doc.to_json());
         }
-        j["documents"] = docs;
+        j["items"] = docs;
         return j;
     }
 };
