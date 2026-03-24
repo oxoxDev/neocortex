@@ -108,6 +108,23 @@ public sealed class TinyHumansMemoryClient : IDisposable
 
     // ── Interactions ──
 
+    // ── Advanced Recall ──
+
+    public async Task<JsonElement> RecallThoughtsAsync(RecallThoughtsParams? p = null)
+    {
+        p ??= new RecallThoughtsParams();
+        p.Validate();
+        return await PostAsync("/memory/memories/thoughts", p.ToJsonObject());
+    }
+
+    public async Task<JsonElement> QueryMemoryContextAsync(QueryMemoryContextParams p)
+    {
+        p.Validate();
+        return await PostAsync("/memory/queries", p.ToJsonObject());
+    }
+
+    // ── Interactions ──
+
     public async Task<JsonElement> InteractMemoryAsync(InteractMemoryParams p)
     {
         p.Validate();

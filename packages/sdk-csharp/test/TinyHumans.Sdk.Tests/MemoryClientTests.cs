@@ -286,6 +286,61 @@ public class MemoryClientTests
         Assert.Equal(500, ex.Status);
     }
 
+    // ── RecallThoughts ──
+
+    [Fact]
+    public async Task RecallThoughts_SendsCorrectPath()
+    {
+        var handler = new MockHttpMessageHandler(HttpStatusCode.OK,
+            @"{""success"":true,""data"":{}}");
+        using var client = CreateClient(handler);
+
+        await client.RecallThoughtsAsync(new RecallThoughtsParams { Namespace = "ns" });
+
+        Assert.EndsWith("/memory/memories/thoughts", handler.CapturedRequest!.RequestUri!.ToString());
+        var body = JsonDocument.Parse(handler.CapturedRequestBody!).RootElement;
+        Assert.Equal("ns", body.GetProperty("namespace").GetString());
+    }
+
+    [Fact]
+    public async Task RecallThoughts_DefaultParams()
+    {
+        var handler = new MockHttpMessageHandler(HttpStatusCode.OK,
+            @"{""success"":true,""data"":{}}");
+        using var client = CreateClient(handler);
+
+        await client.RecallThoughtsAsync();
+
+        Assert.EndsWith("/memory/memories/thoughts", handler.CapturedRequest!.RequestUri!.ToString());
+    }
+
+    // ── QueryMemoryContext ──
+
+    [Fact]
+    public async Task QueryMemoryContext_SendsCorrectRequest()
+    {
+        var handler = new MockHttpMessageHandler(HttpStatusCode.OK,
+            @"{""success"":true,""data"":{}}");
+        using var client = CreateClient(handler);
+
+        await client.QueryMemoryContextAsync(new QueryMemoryContextParams
+        {
+            Query = "test query", Namespace = "ns",
+        });
+
+        Assert.EndsWith("/memory/queries", handler.CapturedRequest!.RequestUri!.ToString());
+        var body = JsonDocument.Parse(handler.CapturedRequestBody!).RootElement;
+        Assert.Equal("test query", body.GetProperty("query").GetString());
+    }
+
+    [Fact]
+    public async Task QueryMemoryContext_ThrowsOnMissingQuery()
+    {
+        using var client = CreateClient();
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            client.QueryMemoryContextAsync(new QueryMemoryContextParams()));
+    }
+
     // ── ChatMemory ──
 
     [Fact]

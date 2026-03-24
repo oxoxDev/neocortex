@@ -328,3 +328,65 @@ public class InteractMemoryParams
         return dict;
     }
 }
+
+// ── Recall Thoughts ──
+
+public class RecallThoughtsParams
+{
+    public string? Namespace { get; set; }
+    public int? MaxChunks { get; set; }
+    public double? Temperature { get; set; }
+    public int? RandomnessSeed { get; set; }
+    public bool? Persist { get; set; }
+    public bool? EnablePredictionCheck { get; set; }
+    public string? ThoughtPrompt { get; set; }
+
+    public void Validate() { }
+
+    public Dictionary<string, object?> ToJsonObject()
+    {
+        var dict = new Dictionary<string, object?>();
+        if (Namespace != null) dict["namespace"] = Namespace;
+        if (MaxChunks.HasValue) dict["maxChunks"] = MaxChunks.Value;
+        if (Temperature.HasValue) dict["temperature"] = Temperature.Value;
+        if (RandomnessSeed.HasValue) dict["randomnessSeed"] = RandomnessSeed.Value;
+        if (Persist.HasValue) dict["persist"] = Persist.Value;
+        if (EnablePredictionCheck.HasValue) dict["enablePredictionCheck"] = EnablePredictionCheck.Value;
+        if (ThoughtPrompt != null) dict["thoughtPrompt"] = ThoughtPrompt;
+        return dict;
+    }
+}
+
+// ── Query Memory Context ──
+
+public class QueryMemoryContextParams
+{
+    public string? Query { get; set; }
+    public string? Namespace { get; set; }
+    public int? MaxChunks { get; set; }
+    public bool? IncludeReferences { get; set; }
+    public List<string>? DocumentIds { get; set; }
+    public bool? RecallOnly { get; set; }
+    public string? LlmQuery { get; set; }
+
+    public void Validate()
+    {
+        if (string.IsNullOrWhiteSpace(Query))
+            throw new ArgumentException("query is required and must be a string");
+    }
+
+    public Dictionary<string, object?> ToJsonObject()
+    {
+        var dict = new Dictionary<string, object?>
+        {
+            ["query"] = Query,
+        };
+        if (Namespace != null) dict["namespace"] = Namespace;
+        if (MaxChunks.HasValue) dict["maxChunks"] = MaxChunks.Value;
+        if (IncludeReferences.HasValue) dict["includeReferences"] = IncludeReferences.Value;
+        if (DocumentIds != null) dict["documentIds"] = DocumentIds;
+        if (RecallOnly.HasValue) dict["recallOnly"] = RecallOnly.Value;
+        if (LlmQuery != null) dict["llmQuery"] = LlmQuery;
+        return dict;
+    }
+}
