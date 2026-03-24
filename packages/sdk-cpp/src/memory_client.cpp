@@ -267,4 +267,24 @@ RecallMemoriesResponse TinyHumansMemoryClient::recall_memories(const RecallMemor
     return RecallMemoriesResponse::from_json(resp);
 }
 
+// ---- Chat ----
+
+json TinyHumansMemoryClient::chat_memory(const ChatMemoryParams& params) {
+    return post("/memory/chat", params.to_json());
+}
+
+json TinyHumansMemoryClient::chat_memory_context(const ChatMemoryParams& params) {
+    return post("/memory/conversations", params.to_json());
+}
+
+// ---- Interactions ----
+
+json TinyHumansMemoryClient::interact_memory(const InteractMemoryParams& params) {
+    return post("/memory/interact", params.to_json());
+}
+
+json TinyHumansMemoryClient::record_interactions(const InteractMemoryParams& params) {
+    return post("/memory/interactions", params.to_json());
+}
+
 } // namespace tinyhumans

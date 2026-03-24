@@ -26,6 +26,14 @@ public:
     QueryMemoryResponse query_memory(const QueryMemoryParams& params);
     RecallMemoriesResponse recall_memories(const RecallMemoriesParams& params = {});
 
+    // Chat
+    json chat_memory(const ChatMemoryParams& params);
+    json chat_memory_context(const ChatMemoryParams& params);
+
+    // Interactions
+    json interact_memory(const InteractMemoryParams& params);
+    json record_interactions(const InteractMemoryParams& params);
+
 private:
     json post(const std::string& path, const json& body);
     json send_get(const std::string& path, const std::map<std::string, std::string>& query_params = {});

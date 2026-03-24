@@ -370,6 +370,92 @@ TEST(MemoryClientTest, RecallMemoriesValidatesMinRetention) {
     EXPECT_THROW(client.recall_memories(p), std::invalid_argument);
 }
 
+// ---- chatMemory ----
+
+TEST(MemoryClientTest, ChatMemorySendsCorrectRequest) {
+    MockHttpServer server;
+    server.set_response(200, R"({"success":true,"data":{"response":"hello"}})");
+    auto future = server.handle_request_async();
+
+    TinyHumansMemoryClient client("test-token", server.base_url());
+    ChatMemoryParams params;
+    params.set_messages({json{{"role", "user"}, {"content", "Hi"}}});
+    auto resp = client.chat_memory(params);
+
+    std::string body = future.get();
+    EXPECT_TRUE(body.find("\"messages\"") != std::string::npos);
+    EXPECT_EQ(server.last_method(), "POST");
+    EXPECT_EQ(server.last_path(), "/memory/chat");
+}
+
+TEST(MemoryClientTest, ChatMemoryValidatesEmptyMessages) {
+    MockHttpServer server;
+    TinyHumansMemoryClient client("test-token", server.base_url());
+    ChatMemoryParams params;
+    EXPECT_THROW(client.chat_memory(params), std::invalid_argument);
+}
+
+TEST(MemoryClientTest, ChatMemoryContextSendsCorrectPath) {
+    MockHttpServer server;
+    server.set_response(200, R"({"success":true,"data":{}})");
+    auto future = server.handle_request_async();
+
+    TinyHumansMemoryClient client("test-token", server.base_url());
+    ChatMemoryParams params;
+    params.set_messages({json{{"role", "user"}, {"content", "Hi"}}});
+    client.chat_memory_context(params);
+    future.get();
+
+    EXPECT_EQ(server.last_path(), "/memory/conversations");
+}
+
+// ---- interactMemory ----
+
+TEST(MemoryClientTest, InteractMemorySendsCorrectRequest) {
+    MockHttpServer server;
+    server.set_response(200, R"({"success":true,"data":{}})");
+    auto future = server.handle_request_async();
+
+    TinyHumansMemoryClient client("test-token", server.base_url());
+    InteractMemoryParams params;
+    params.set_namespace("ns").set_entities({"ENTITY1", "ENTITY2"});
+    client.interact_memory(params);
+
+    std::string body = future.get();
+    EXPECT_TRUE(body.find("\"entities\"") != std::string::npos);
+    EXPECT_EQ(server.last_path(), "/memory/interact");
+}
+
+TEST(MemoryClientTest, InteractMemoryValidatesMissingNamespace) {
+    MockHttpServer server;
+    TinyHumansMemoryClient client("test-token", server.base_url());
+    InteractMemoryParams params;
+    params.set_entities({"E"});
+    EXPECT_THROW(client.interact_memory(params), std::invalid_argument);
+}
+
+TEST(MemoryClientTest, InteractMemoryValidatesMissingEntities) {
+    MockHttpServer server;
+    TinyHumansMemoryClient client("test-token", server.base_url());
+    InteractMemoryParams params;
+    params.set_namespace("ns");
+    EXPECT_THROW(client.interact_memory(params), std::invalid_argument);
+}
+
+TEST(MemoryClientTest, RecordInteractionsSendsCorrectPath) {
+    MockHttpServer server;
+    server.set_response(200, R"({"success":true,"data":{}})");
+    auto future = server.handle_request_async();
+
+    TinyHumansMemoryClient client("test-token", server.base_url());
+    InteractMemoryParams params;
+    params.set_namespace("ns").set_entities({"E"});
+    client.record_interactions(params);
+    future.get();
+
+    EXPECT_EQ(server.last_path(), "/memory/interactions");
+}
+
 // ---- Error handling ----
 
 TEST(MemoryClientTest, NonOkStatusThrowsTinyHumansError) {

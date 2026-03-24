@@ -252,4 +252,58 @@ struct RecallMemoriesResponse {
     }
 };
 
+// ---- Chat params ----
+
+struct ChatMemoryParams {
+    std::vector<json> messages;
+    std::optional<std::string> namespace_;
+    std::optional<double> temperature;
+    std::optional<int> max_tokens;
+    std::optional<std::string> model;
+
+    ChatMemoryParams& set_messages(const std::vector<json>& v) { messages = v; return *this; }
+    ChatMemoryParams& set_namespace(const std::string& v) { namespace_ = v; return *this; }
+    ChatMemoryParams& set_temperature(double v) { temperature = v; return *this; }
+    ChatMemoryParams& set_max_tokens(int v) { max_tokens = v; return *this; }
+    ChatMemoryParams& set_model(const std::string& v) { model = v; return *this; }
+
+    void validate() const {
+        if (messages.empty()) throw std::invalid_argument("messages is required");
+    }
+
+    json to_json() const {
+        validate();
+        json j;
+        j["messages"] = messages;
+        if (namespace_) j["namespace"] = *namespace_;
+        if (temperature) j["temperature"] = *temperature;
+        if (max_tokens) j["maxTokens"] = *max_tokens;
+        if (model) j["model"] = *model;
+        return j;
+    }
+};
+
+// ---- Interaction params ----
+
+struct InteractMemoryParams {
+    std::string namespace_;
+    std::vector<std::string> entities;
+
+    InteractMemoryParams& set_namespace(const std::string& v) { namespace_ = v; return *this; }
+    InteractMemoryParams& set_entities(const std::vector<std::string>& v) { entities = v; return *this; }
+
+    void validate() const {
+        if (namespace_.empty()) throw std::invalid_argument("namespace is required");
+        if (entities.empty()) throw std::invalid_argument("entities is required");
+    }
+
+    json to_json() const {
+        validate();
+        json j;
+        j["namespace"] = namespace_;
+        j["entities"] = entities;
+        return j;
+    }
+};
+
 } // namespace tinyhumans
