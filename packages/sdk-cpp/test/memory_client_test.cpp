@@ -108,6 +108,21 @@ public:
 
     const std::string& last_request() const { return last_request_; }
 
+    std::string last_method() const {
+        auto end = last_request_.find(' ');
+        if (end == std::string::npos) return "";
+        return last_request_.substr(0, end);
+    }
+
+    std::string last_path() const {
+        auto start = last_request_.find(' ');
+        if (start == std::string::npos) return "";
+        start++;
+        auto end = last_request_.find(' ', start);
+        if (end == std::string::npos) return "";
+        return last_request_.substr(start, end - start);
+    }
+
 private:
     int server_fd_ = -1;
     int port_ = 0;
@@ -130,6 +145,23 @@ TEST(MemoryClientTest, ConstructorAcceptsValidToken) {
     MockHttpServer server;
     TinyHumansMemoryClient client("test-token", server.base_url());
     // No throw = success
+}
+
+// ---- MockHttpServer helpers ----
+
+TEST(MemoryClientTest, MockServerParsesMethodAndPath) {
+    MockHttpServer server;
+    server.set_response(200, R"({"success":true,"data":{"status":"completed","stats":{"chunks":1}}})");
+    auto future = server.handle_request_async();
+
+    TinyHumansMemoryClient client("test-token", server.base_url());
+    InsertMemoryParams params;
+    params.set_title("t").set_content("c").set_namespace("n");
+    client.insert_memory(params);
+    future.get();
+
+    EXPECT_EQ(server.last_method(), "POST");
+    EXPECT_EQ(server.last_path(), "/memory/insert");
 }
 
 // ---- Model ID ----

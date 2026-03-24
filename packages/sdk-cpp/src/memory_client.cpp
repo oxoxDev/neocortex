@@ -131,6 +131,87 @@ json TinyHumansMemoryClient::post(const std::string& path, const json& body) {
     return handle_response(http_code, response_body);
 }
 
+std::string TinyHumansMemoryClient::build_query_string(const std::map<std::string, std::string>& params) {
+    if (params.empty()) return "";
+    auto* handle = static_cast<CURL*>(curl_);
+    std::string qs = "?";
+    bool first = true;
+    for (const auto& [key, value] : params) {
+        if (!first) qs += "&";
+        char* escaped = curl_easy_escape(handle, value.c_str(), static_cast<int>(value.size()));
+        qs += key + "=" + std::string(escaped);
+        curl_free(escaped);
+        first = false;
+    }
+    return qs;
+}
+
+json TinyHumansMemoryClient::send_get(const std::string& path, const std::map<std::string, std::string>& query_params) {
+    auto* handle = static_cast<CURL*>(curl_);
+    std::string url = base_url_ + path + build_query_string(query_params);
+    std::string response_body;
+
+    curl_easy_reset(handle);
+    curl_easy_setopt(handle, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(handle, CURLOPT_HTTPGET, 1L);
+    curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_callback);
+    curl_easy_setopt(handle, CURLOPT_WRITEDATA, &response_body);
+    curl_easy_setopt(handle, CURLOPT_TIMEOUT, 30L);
+    curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 30L);
+
+    struct curl_slist* headers = nullptr;
+    std::string auth_header = "Authorization: Bearer " + token_;
+    headers = curl_slist_append(headers, auth_header.c_str());
+    std::string model_header = "X-Model-Id: " + model_id_;
+    headers = curl_slist_append(headers, model_header.c_str());
+    curl_easy_setopt(handle, CURLOPT_HTTPHEADER, headers);
+
+    CURLcode res = curl_easy_perform(handle);
+    curl_slist_free_all(headers);
+
+    if (res != CURLE_OK) {
+        throw std::runtime_error(std::string("HTTP request failed: ") + curl_easy_strerror(res));
+    }
+
+    long http_code = 0;
+    curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &http_code);
+
+    return handle_response(http_code, response_body);
+}
+
+json TinyHumansMemoryClient::send_delete(const std::string& path, const std::map<std::string, std::string>& query_params) {
+    auto* handle = static_cast<CURL*>(curl_);
+    std::string url = base_url_ + path + build_query_string(query_params);
+    std::string response_body;
+
+    curl_easy_reset(handle);
+    curl_easy_setopt(handle, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "DELETE");
+    curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_callback);
+    curl_easy_setopt(handle, CURLOPT_WRITEDATA, &response_body);
+    curl_easy_setopt(handle, CURLOPT_TIMEOUT, 30L);
+    curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 30L);
+
+    struct curl_slist* headers = nullptr;
+    std::string auth_header = "Authorization: Bearer " + token_;
+    headers = curl_slist_append(headers, auth_header.c_str());
+    std::string model_header = "X-Model-Id: " + model_id_;
+    headers = curl_slist_append(headers, model_header.c_str());
+    curl_easy_setopt(handle, CURLOPT_HTTPHEADER, headers);
+
+    CURLcode res = curl_easy_perform(handle);
+    curl_slist_free_all(headers);
+
+    if (res != CURLE_OK) {
+        throw std::runtime_error(std::string("HTTP request failed: ") + curl_easy_strerror(res));
+    }
+
+    long http_code = 0;
+    curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &http_code);
+
+    return handle_response(http_code, response_body);
+}
+
 json TinyHumansMemoryClient::handle_response(long http_code, const std::string& response_body) {
     json parsed;
     try {

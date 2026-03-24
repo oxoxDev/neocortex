@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.hpp"
+#include <map>
 #include <string>
 
 namespace tinyhumans {
@@ -27,6 +28,9 @@ public:
 
 private:
     json post(const std::string& path, const json& body);
+    json send_get(const std::string& path, const std::map<std::string, std::string>& query_params = {});
+    json send_delete(const std::string& path, const std::map<std::string, std::string>& query_params = {});
+    std::string build_query_string(const std::map<std::string, std::string>& params);
     json handle_response(long http_code, const std::string& response_body);
     static size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userdata);
 
