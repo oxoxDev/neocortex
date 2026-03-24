@@ -306,4 +306,44 @@ struct InteractMemoryParams {
     }
 };
 
+// ---- Advanced recall params ----
+
+struct RecallThoughtsParams {
+    std::optional<std::string> namespace_;
+
+    RecallThoughtsParams& set_namespace(const std::string& v) { namespace_ = v; return *this; }
+
+    void validate() const {}
+
+    json to_json() const {
+        validate();
+        json j = json::object();
+        if (namespace_) j["namespace"] = *namespace_;
+        return j;
+    }
+};
+
+struct QueryMemoryContextParams {
+    std::string query;
+    std::optional<std::string> namespace_;
+    std::optional<int> max_chunks;
+
+    QueryMemoryContextParams& set_query(const std::string& v) { query = v; return *this; }
+    QueryMemoryContextParams& set_namespace(const std::string& v) { namespace_ = v; return *this; }
+    QueryMemoryContextParams& set_max_chunks(int v) { max_chunks = v; return *this; }
+
+    void validate() const {
+        if (query.empty()) throw std::invalid_argument("query is required");
+    }
+
+    json to_json() const {
+        validate();
+        json j;
+        j["query"] = query;
+        if (namespace_) j["namespace"] = *namespace_;
+        if (max_chunks) j["maxChunks"] = *max_chunks;
+        return j;
+    }
+};
+
 } // namespace tinyhumans

@@ -34,6 +34,10 @@ public:
     json interact_memory(const InteractMemoryParams& params);
     json record_interactions(const InteractMemoryParams& params);
 
+    // Advanced recall
+    json recall_thoughts(const RecallThoughtsParams& params = {});
+    json query_memory_context(const QueryMemoryContextParams& params);
+
 private:
     json post(const std::string& path, const json& body);
     json send_get(const std::string& path, const std::map<std::string, std::string>& query_params = {});

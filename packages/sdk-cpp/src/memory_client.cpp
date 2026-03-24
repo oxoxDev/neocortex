@@ -287,4 +287,14 @@ json TinyHumansMemoryClient::record_interactions(const InteractMemoryParams& par
     return post("/memory/interactions", params.to_json());
 }
 
+// ---- Advanced recall ----
+
+json TinyHumansMemoryClient::recall_thoughts(const RecallThoughtsParams& params) {
+    return post("/memory/memories/thoughts", params.to_json());
+}
+
+json TinyHumansMemoryClient::query_memory_context(const QueryMemoryContextParams& params) {
+    return post("/memory/queries", params.to_json());
+}
+
 } // namespace tinyhumans

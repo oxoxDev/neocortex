@@ -456,6 +456,46 @@ TEST(MemoryClientTest, RecordInteractionsSendsCorrectPath) {
     EXPECT_EQ(server.last_path(), "/memory/interactions");
 }
 
+// ---- recallThoughts ----
+
+TEST(MemoryClientTest, RecallThoughtsSendsCorrectRequest) {
+    MockHttpServer server;
+    server.set_response(200, R"({"success":true,"data":{"thoughts":[]}})");
+    auto future = server.handle_request_async();
+
+    TinyHumansMemoryClient client("test-token", server.base_url());
+    RecallThoughtsParams params;
+    params.set_namespace("ns");
+    client.recall_thoughts(params);
+    future.get();
+
+    EXPECT_EQ(server.last_path(), "/memory/memories/thoughts");
+}
+
+// ---- queryMemoryContext ----
+
+TEST(MemoryClientTest, QueryMemoryContextSendsCorrectRequest) {
+    MockHttpServer server;
+    server.set_response(200, R"({"success":true,"data":{}})");
+    auto future = server.handle_request_async();
+
+    TinyHumansMemoryClient client("test-token", server.base_url());
+    QueryMemoryContextParams params;
+    params.set_query("test query").set_namespace("ns");
+    client.query_memory_context(params);
+
+    std::string body = future.get();
+    EXPECT_TRUE(body.find("\"query\"") != std::string::npos);
+    EXPECT_EQ(server.last_path(), "/memory/queries");
+}
+
+TEST(MemoryClientTest, QueryMemoryContextValidatesMissingQuery) {
+    MockHttpServer server;
+    TinyHumansMemoryClient client("test-token", server.base_url());
+    QueryMemoryContextParams params;
+    EXPECT_THROW(client.query_memory_context(params), std::invalid_argument);
+}
+
 // ---- Error handling ----
 
 TEST(MemoryClientTest, NonOkStatusThrowsTinyHumansError) {
