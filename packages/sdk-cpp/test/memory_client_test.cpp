@@ -132,6 +132,34 @@ TEST(MemoryClientTest, ConstructorAcceptsValidToken) {
     // No throw = success
 }
 
+// ---- Model ID ----
+
+TEST(MemoryClientTest, DefaultModelIdSendsHeader) {
+    MockHttpServer server;
+    server.set_response(200, R"({"success":true,"data":{"cached":false}})");
+    auto future = server.handle_request_async();
+
+    TinyHumansMemoryClient client("test-token", server.base_url());
+    client.recall_memory();
+    future.get();
+
+    const auto& req = server.last_request();
+    EXPECT_TRUE(req.find("X-Model-Id: neocortex-mk1") != std::string::npos);
+}
+
+TEST(MemoryClientTest, CustomModelIdSendsHeader) {
+    MockHttpServer server;
+    server.set_response(200, R"({"success":true,"data":{"cached":false}})");
+    auto future = server.handle_request_async();
+
+    TinyHumansMemoryClient client("test-token", "custom-model", server.base_url());
+    client.recall_memory();
+    future.get();
+
+    const auto& req = server.last_request();
+    EXPECT_TRUE(req.find("X-Model-Id: custom-model") != std::string::npos);
+}
+
 // ---- insertMemory ----
 
 TEST(MemoryClientTest, InsertMemorySendsCorrectRequest) {

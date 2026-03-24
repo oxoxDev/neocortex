@@ -8,6 +8,7 @@ namespace tinyhumans {
 class TinyHumansMemoryClient {
 public:
     explicit TinyHumansMemoryClient(const std::string& token, const std::string& base_url = "");
+    TinyHumansMemoryClient(const std::string& token, const std::string& model_id, const std::string& base_url);
     ~TinyHumansMemoryClient();
 
     // Non-copyable
@@ -31,6 +32,7 @@ private:
 
     std::string base_url_;
     std::string token_;
+    std::string model_id_;
     void* curl_ = nullptr;
 };
 

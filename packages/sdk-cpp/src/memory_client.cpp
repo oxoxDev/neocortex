@@ -29,7 +29,7 @@ size_t TinyHumansMemoryClient::write_callback(char* ptr, size_t size, size_t nme
 // ---- Constructor / Destructor ----
 
 TinyHumansMemoryClient::TinyHumansMemoryClient(const std::string& token, const std::string& base_url)
-    : token_(token) {
+    : token_(token), model_id_("neocortex-mk1") {
     if (token.empty() || token.find_first_not_of(" \t\n\r") == std::string::npos) {
         throw std::invalid_argument("token is required");
     }
@@ -58,6 +58,11 @@ TinyHumansMemoryClient::TinyHumansMemoryClient(const std::string& token, const s
     }
 }
 
+TinyHumansMemoryClient::TinyHumansMemoryClient(const std::string& token, const std::string& model_id, const std::string& base_url)
+    : TinyHumansMemoryClient(token, base_url) {
+    model_id_ = model_id;
+}
+
 TinyHumansMemoryClient::~TinyHumansMemoryClient() {
     if (curl_) {
         curl_easy_cleanup(static_cast<CURL*>(curl_));
@@ -68,6 +73,7 @@ TinyHumansMemoryClient::~TinyHumansMemoryClient() {
 TinyHumansMemoryClient::TinyHumansMemoryClient(TinyHumansMemoryClient&& other) noexcept
     : base_url_(std::move(other.base_url_)),
       token_(std::move(other.token_)),
+      model_id_(std::move(other.model_id_)),
       curl_(other.curl_) {
     other.curl_ = nullptr;
 }
@@ -79,6 +85,7 @@ TinyHumansMemoryClient& TinyHumansMemoryClient::operator=(TinyHumansMemoryClient
         }
         base_url_ = std::move(other.base_url_);
         token_ = std::move(other.token_);
+        model_id_ = std::move(other.model_id_);
         curl_ = other.curl_;
         other.curl_ = nullptr;
     }
@@ -107,6 +114,8 @@ json TinyHumansMemoryClient::post(const std::string& path, const json& body) {
     headers = curl_slist_append(headers, "Content-Type: application/json");
     std::string auth_header = "Authorization: Bearer " + token_;
     headers = curl_slist_append(headers, auth_header.c_str());
+    std::string model_header = "X-Model-Id: " + model_id_;
+    headers = curl_slist_append(headers, model_header.c_str());
     curl_easy_setopt(handle, CURLOPT_HTTPHEADER, headers);
 
     CURLcode res = curl_easy_perform(handle);
