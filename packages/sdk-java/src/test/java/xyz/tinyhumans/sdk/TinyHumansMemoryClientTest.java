@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -50,6 +51,108 @@ class TinyHumansMemoryClientTest {
         TinyHumansMemoryClient client = new TinyHumansMemoryClient("test-token", baseUrl);
         assertNotNull(client);
         client.close();
+    }
+
+    // ---- modelId and X-Model-Id header ----
+
+    @Test
+    void defaultModelIdIsNeocortexMk1() {
+        server.createContext("/memory/insert", exchange -> {
+            assertEquals("neocortex-mk1", exchange.getRequestHeaders().getFirst("X-Model-Id"));
+            String response = "{\"success\":true,\"data\":{\"status\":\"completed\"}}";
+            exchange.sendResponseHeaders(200, response.length());
+            try (OutputStream os = exchange.getResponseBody()) { os.write(response.getBytes(StandardCharsets.UTF_8)); }
+        });
+
+        try (TinyHumansMemoryClient client = new TinyHumansMemoryClient("tok", baseUrl)) {
+            client.insertMemory(new InsertMemoryParams("t", "c", "n"));
+        }
+    }
+
+    @Test
+    void customModelIdSentInHeader() {
+        server.createContext("/memory/insert", exchange -> {
+            assertEquals("custom-model", exchange.getRequestHeaders().getFirst("X-Model-Id"));
+            String response = "{\"success\":true,\"data\":{\"status\":\"completed\"}}";
+            exchange.sendResponseHeaders(200, response.length());
+            try (OutputStream os = exchange.getResponseBody()) { os.write(response.getBytes(StandardCharsets.UTF_8)); }
+        });
+
+        try (TinyHumansMemoryClient client = new TinyHumansMemoryClient("tok", "custom-model", baseUrl)) {
+            client.insertMemory(new InsertMemoryParams("t", "c", "n"));
+        }
+    }
+
+    @Test
+    void emptyModelIdDefaultsToNeocortex() {
+        server.createContext("/memory/insert", exchange -> {
+            assertEquals("neocortex-mk1", exchange.getRequestHeaders().getFirst("X-Model-Id"));
+            String response = "{\"success\":true,\"data\":{\"status\":\"completed\"}}";
+            exchange.sendResponseHeaders(200, response.length());
+            try (OutputStream os = exchange.getResponseBody()) { os.write(response.getBytes(StandardCharsets.UTF_8)); }
+        });
+
+        try (TinyHumansMemoryClient client = new TinyHumansMemoryClient("tok", "", baseUrl)) {
+            client.insertMemory(new InsertMemoryParams("t", "c", "n"));
+        }
+    }
+
+    // ---- sendGet ----
+
+    @Test
+    void sendGetWithQueryParams() {
+        server.createContext("/memory/documents", exchange -> {
+            assertEquals("GET", exchange.getRequestMethod());
+            assertTrue(exchange.getRequestURI().getQuery().contains("namespace=ns"));
+            assertTrue(exchange.getRequestURI().getQuery().contains("limit=10"));
+            assertNotNull(exchange.getRequestHeaders().getFirst("X-Model-Id"));
+            String response = "{\"data\":{\"documents\":[]}}";
+            exchange.sendResponseHeaders(200, response.length());
+            try (OutputStream os = exchange.getResponseBody()) { os.write(response.getBytes(StandardCharsets.UTF_8)); }
+        });
+
+        try (TinyHumansMemoryClient client = new TinyHumansMemoryClient("tok", baseUrl)) {
+            Map<String, String> params = new LinkedHashMap<>();
+            params.put("namespace", "ns");
+            params.put("limit", "10");
+            Map<String, Object> result = client.sendGet("/memory/documents", params);
+            assertNotNull(result);
+        }
+    }
+
+    @Test
+    void sendGetNullParams() {
+        server.createContext("/memory/test", exchange -> {
+            assertNull(exchange.getRequestURI().getQuery());
+            String response = "{\"data\":{}}";
+            exchange.sendResponseHeaders(200, response.length());
+            try (OutputStream os = exchange.getResponseBody()) { os.write(response.getBytes(StandardCharsets.UTF_8)); }
+        });
+
+        try (TinyHumansMemoryClient client = new TinyHumansMemoryClient("tok", baseUrl)) {
+            client.sendGet("/memory/test", null);
+        }
+    }
+
+    // ---- sendDelete ----
+
+    @Test
+    void sendDeleteWithQueryParams() {
+        server.createContext("/memory/documents/doc1", exchange -> {
+            assertEquals("DELETE", exchange.getRequestMethod());
+            assertTrue(exchange.getRequestURI().getQuery().contains("namespace=ns"));
+            assertNotNull(exchange.getRequestHeaders().getFirst("X-Model-Id"));
+            String response = "{\"data\":{\"deleted\":true}}";
+            exchange.sendResponseHeaders(200, response.length());
+            try (OutputStream os = exchange.getResponseBody()) { os.write(response.getBytes(StandardCharsets.UTF_8)); }
+        });
+
+        try (TinyHumansMemoryClient client = new TinyHumansMemoryClient("tok", baseUrl)) {
+            Map<String, String> params = new LinkedHashMap<>();
+            params.put("namespace", "ns");
+            Map<String, Object> result = client.sendDelete("/memory/documents/doc1", params);
+            assertNotNull(result);
+        }
     }
 
     // ---- insertMemory ----

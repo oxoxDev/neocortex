@@ -3,11 +3,14 @@ package xyz.tinyhumans.sdk;
 import xyz.tinyhumans.sdk.internal.Json;
 
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
+import java.util.StringJoiner;
 
 /**
  * Client for the TinyHuman Memory API.
@@ -17,21 +20,28 @@ import java.util.Map;
 public class TinyHumansMemoryClient implements AutoCloseable {
 
     private static final String DEFAULT_BASE_URL = "https://api.tinyhumans.ai";
+    private static final String DEFAULT_MODEL_ID = "neocortex-mk1";
     private static final String TINYHUMANS_BASE_URL = "TINYHUMANS_BASE_URL";
 
     private final String baseUrl;
     private final String token;
+    private final String modelId;
     private final HttpClient httpClient;
 
     public TinyHumansMemoryClient(String token) {
-        this(token, null);
+        this(token, (String) null);
     }
 
     public TinyHumansMemoryClient(String token, String baseUrl) {
+        this(token, null, baseUrl);
+    }
+
+    public TinyHumansMemoryClient(String token, String modelId, String baseUrl) {
         if (token == null || token.trim().isEmpty()) {
             throw new IllegalArgumentException("token is required");
         }
         this.token = token;
+        this.modelId = (modelId != null && !modelId.isEmpty()) ? modelId : DEFAULT_MODEL_ID;
 
         String resolved = baseUrl;
         if (resolved == null || resolved.isEmpty()) {
@@ -95,6 +105,7 @@ public class TinyHumansMemoryClient implements AutoCloseable {
                 .uri(URI.create(baseUrl + path))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + token)
+                .header("X-Model-Id", modelId)
                 .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                 .timeout(Duration.ofSeconds(30))
                 .build();
@@ -107,6 +118,56 @@ public class TinyHumansMemoryClient implements AutoCloseable {
         }
 
         return handleResponse(response);
+    }
+
+    Map<String, Object> sendGet(String path, Map<String, String> params) {
+        String url = baseUrl + path + buildQueryString(params);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Authorization", "Bearer " + token)
+                .header("X-Model-Id", modelId)
+                .GET()
+                .timeout(Duration.ofSeconds(30))
+                .build();
+
+        HttpResponse<String> response;
+        try {
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (Exception e) {
+            throw new RuntimeException("HTTP request failed: " + e.getMessage(), e);
+        }
+
+        return handleResponse(response);
+    }
+
+    Map<String, Object> sendDelete(String path, Map<String, String> params) {
+        String url = baseUrl + path + buildQueryString(params);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Authorization", "Bearer " + token)
+                .header("X-Model-Id", modelId)
+                .DELETE()
+                .timeout(Duration.ofSeconds(30))
+                .build();
+
+        HttpResponse<String> response;
+        try {
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (Exception e) {
+            throw new RuntimeException("HTTP request failed: " + e.getMessage(), e);
+        }
+
+        return handleResponse(response);
+    }
+
+    private String buildQueryString(Map<String, String> params) {
+        if (params == null || params.isEmpty()) return "";
+        StringJoiner joiner = new StringJoiner("&", "?", "");
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            joiner.add(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8)
+                    + "=" + URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
+        }
+        return joiner.toString();
     }
 
     private Map<String, Object> handleResponse(HttpResponse<String> response) {
