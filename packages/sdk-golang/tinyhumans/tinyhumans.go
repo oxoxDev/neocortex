@@ -125,6 +125,13 @@ type RecallThoughtsOptions struct {
 	ThoughtPrompt         string
 }
 
+// QueryMemoryOptions holds optional parameters for QueryMemory.
+type QueryMemoryOptions struct {
+	Namespace   string
+	MaxChunks   *int
+	DocumentIDs []string
+}
+
 // QueryMemoryContextOptions holds optional parameters for QueryMemoryContext.
 type QueryMemoryContextOptions struct {
 	Namespace         string

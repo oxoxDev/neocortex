@@ -754,3 +754,78 @@ func TestWaitForIngestionJob_EmptyID(t *testing.T) {
 		t.Fatal("expected error for empty job_id")
 	}
 }
+
+// --- QueryMemory ---
+
+func TestQueryMemory_Success(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/memory/query" {
+			t.Errorf("path = %s, want /memory/query", r.URL.Path)
+		}
+		if r.Method != "POST" {
+			t.Errorf("method = %s, want POST", r.Method)
+		}
+
+		var body map[string]interface{}
+		json.NewDecoder(r.Body).Decode(&body)
+
+		if body["query"] != "test query" {
+			t.Errorf("query = %v, want test query", body["query"])
+		}
+		if body["namespace"] != "ns" {
+			t.Errorf("namespace = %v, want ns", body["namespace"])
+		}
+		if body["maxChunks"] != float64(5) {
+			t.Errorf("maxChunks = %v, want 5", body["maxChunks"])
+		}
+		docIDs, ok := body["documentIds"].([]interface{})
+		if !ok || len(docIDs) != 2 {
+			t.Fatalf("documentIds = %v", body["documentIds"])
+		}
+
+		w.Write([]byte(`{"data":{"context":"some context"}}`))
+	}))
+	defer server.Close()
+
+	c, _ := NewClient("tok", server.URL)
+	maxChunks := 5
+	data, err := c.QueryMemory("test query", &QueryMemoryOptions{
+		Namespace:   "ns",
+		MaxChunks:   &maxChunks,
+		DocumentIDs: []string{"doc1", "doc2"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if data["context"] != "some context" {
+		t.Errorf("context = %v", data["context"])
+	}
+}
+
+func TestQueryMemory_EmptyQuery(t *testing.T) {
+	c, _ := NewClient("tok")
+	_, err := c.QueryMemory("", nil)
+	if err == nil {
+		t.Fatal("expected error for empty query")
+	}
+}
+
+func TestQueryMemory_NilOpts(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]interface{}
+		json.NewDecoder(r.Body).Decode(&body)
+
+		if _, ok := body["namespace"]; ok {
+			t.Error("namespace should not be set with nil opts")
+		}
+
+		w.Write([]byte(`{"data":{"result":"ok"}}`))
+	}))
+	defer server.Close()
+
+	c, _ := NewClient("tok", server.URL)
+	_, err := c.QueryMemory("hello", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+}

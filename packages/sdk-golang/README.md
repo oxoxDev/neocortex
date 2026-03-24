@@ -87,10 +87,11 @@ Base URL resolution: argument → `TINYHUMANS_BASE_URL` env → `https://api.tin
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `IngestMemory(item)` | POST `/v1/memory/insert` | Ingest a single memory item |
-| `IngestMemories(items)` | POST `/v1/memory/insert` | Batch ingest memory items |
-| `RecallMemory(namespace, prompt, opts)` | POST `/v1/memory/recall` | Recall LLM-friendly context |
-| `DeleteMemory(namespace, opts)` | POST `/v1/memory/admin/delete` | Delete memory by namespace |
+| `IngestMemory(item)` | POST `/memory/insert` | Ingest a single memory item |
+| `IngestMemories(items)` | POST `/memory/insert` | Batch ingest memory items |
+| `QueryMemory(query, opts)` | POST `/memory/query` | Query memory via RAG |
+| `RecallMemory(namespace, prompt, opts)` | POST `/memory/recall` | Recall LLM-friendly context |
+| `DeleteMemory(namespace, opts)` | POST `/memory/admin/delete` | Delete memory by namespace |
 | `RecallWithLLM(prompt, apiKey, opts)` | — | Query LLM with memory context |
 
 ### Chat

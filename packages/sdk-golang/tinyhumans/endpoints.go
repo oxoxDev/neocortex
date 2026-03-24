@@ -125,6 +125,31 @@ func (c *Client) RecallThoughts(opts *RecallThoughtsOptions) (map[string]interfa
 	return c.send("POST", "/memory/memories/thoughts", body)
 }
 
+// QueryMemory queries memory via RAG.
+// POST /memory/query
+func (c *Client) QueryMemory(query string, opts *QueryMemoryOptions) (map[string]interface{}, error) {
+	if query == "" {
+		return nil, errors.New("query is required")
+	}
+
+	body := map[string]interface{}{
+		"query": query,
+	}
+	if opts != nil {
+		if opts.Namespace != "" {
+			body["namespace"] = opts.Namespace
+		}
+		if opts.MaxChunks != nil {
+			body["maxChunks"] = *opts.MaxChunks
+		}
+		if opts.DocumentIDs != nil {
+			body["documentIds"] = opts.DocumentIDs
+		}
+	}
+
+	return c.send("POST", "/memory/query", body)
+}
+
 // QueryMemoryContext queries memory context via the queries endpoint.
 // POST /memory/queries
 func (c *Client) QueryMemoryContext(query string, opts *QueryMemoryContextOptions) (map[string]interface{}, error) {
