@@ -341,6 +341,68 @@ class TinyHumansMemoryClientTest {
         }
     }
 
+    // ---- recallThoughts ----
+
+    @Test
+    void recallThoughtsSuccess() {
+        server.createContext("/memory/memories/thoughts", exchange -> {
+            assertEquals("POST", exchange.getRequestMethod());
+            String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            assertTrue(body.contains("\"namespace\""));
+            String response = "{\"data\":{\"thought\":\"interesting\"}}";
+            exchange.sendResponseHeaders(200, response.length());
+            try (OutputStream os = exchange.getResponseBody()) { os.write(response.getBytes(StandardCharsets.UTF_8)); }
+        });
+
+        try (TinyHumansMemoryClient client = new TinyHumansMemoryClient("tok", baseUrl)) {
+            Map<String, Object> resp = client.recallThoughts(
+                    new RecallThoughtsParams().setNamespace("ns"));
+            assertNotNull(resp.get("data"));
+        }
+    }
+
+    @Test
+    void recallThoughtsNullParams() {
+        server.createContext("/memory/memories/thoughts", exchange -> {
+            String response = "{\"data\":{\"thought\":\"empty\"}}";
+            exchange.sendResponseHeaders(200, response.length());
+            try (OutputStream os = exchange.getResponseBody()) { os.write(response.getBytes(StandardCharsets.UTF_8)); }
+        });
+
+        try (TinyHumansMemoryClient client = new TinyHumansMemoryClient("tok", baseUrl)) {
+            Map<String, Object> resp = client.recallThoughts(null);
+            assertNotNull(resp);
+        }
+    }
+
+    // ---- queryMemoryContext ----
+
+    @Test
+    void queryMemoryContextSuccess() {
+        server.createContext("/memory/queries", exchange -> {
+            assertEquals("POST", exchange.getRequestMethod());
+            String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            assertTrue(body.contains("\"query\""));
+            String response = "{\"data\":{\"response\":\"answer\"}}";
+            exchange.sendResponseHeaders(200, response.length());
+            try (OutputStream os = exchange.getResponseBody()) { os.write(response.getBytes(StandardCharsets.UTF_8)); }
+        });
+
+        try (TinyHumansMemoryClient client = new TinyHumansMemoryClient("tok", baseUrl)) {
+            Map<String, Object> resp = client.queryMemoryContext(
+                    new QueryMemoryContextParams("what?"));
+            assertNotNull(resp.get("data"));
+        }
+    }
+
+    @Test
+    void queryMemoryContextRejectsEmptyQuery() {
+        try (TinyHumansMemoryClient client = new TinyHumansMemoryClient("tok", baseUrl)) {
+            assertThrows(IllegalArgumentException.class, () ->
+                    client.queryMemoryContext(new QueryMemoryContextParams()));
+        }
+    }
+
     // ---- interactMemory ----
 
     @Test

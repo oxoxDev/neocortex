@@ -92,6 +92,16 @@ public class TinyHumansMemoryClient implements AutoCloseable {
         return RecallMemoriesResponse.fromMap(response);
     }
 
+    /** Generate reflective thoughts. POST /memory/memories/thoughts */
+    public Map<String, Object> recallThoughts(RecallThoughtsParams params) {
+        return post("/memory/memories/thoughts", params != null ? params.toMap() : Map.of());
+    }
+
+    /** Query memory context. POST /memory/queries */
+    public Map<String, Object> queryMemoryContext(QueryMemoryContextParams params) {
+        return post("/memory/queries", params.toMap());
+    }
+
     /** Record entity interactions. POST /memory/interact */
     public Map<String, Object> interactMemory(InteractMemoryParams params) {
         return post("/memory/interact", params.toMap());
