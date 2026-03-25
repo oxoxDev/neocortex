@@ -347,4 +347,29 @@ json TinyHumansMemoryClient::wait_for_ingestion_job(const std::string& job_id, c
     throw std::runtime_error("ingestion job timed out after " + std::to_string(opts.max_attempts) + " attempts");
 }
 
+json TinyHumansMemoryClient::recall_memories_context(const std::string& namespace_, double max_chunks) {
+    json body = json::object();
+    if (!namespace_.empty()) body["namespace"] = namespace_;
+    if (max_chunks > 0) body["maxChunks"] = max_chunks;
+    return post("/memory/memories/context", body);
+}
+
+json TinyHumansMemoryClient::memory_health() {
+    return send_get("/memory/health");
+}
+
+json TinyHumansMemoryClient::sync_memory(const std::string& workspace_id, const std::string& agent_id,
+                                          const json& files, const std::string& source) {
+    if (workspace_id.empty()) throw std::invalid_argument("workspaceId is required");
+    if (agent_id.empty()) throw std::invalid_argument("agentId is required");
+    if (files.empty()) throw std::invalid_argument("files is required and must be non-empty");
+    json body = {
+        {"workspaceId", workspace_id},
+        {"agentId", agent_id},
+        {"files", files},
+    };
+    if (!source.empty()) body["source"] = source;
+    return post("/memory/sync", body);
+}
+
 } // namespace tinyhumans

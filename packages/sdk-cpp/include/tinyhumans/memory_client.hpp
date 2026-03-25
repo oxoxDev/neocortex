@@ -45,10 +45,16 @@ public:
     json get_document(const GetDocumentParams& params);
     json delete_document(const std::string& document_id, const std::string& namespace_ = "");
 
+    // Memory context
+    json recall_memories_context(const std::string& namespace_ = "", double max_chunks = 0);
+
     // Admin & utility
     json get_graph_snapshot(const GraphSnapshotParams& params = {});
     json get_ingestion_job(const std::string& job_id);
     json wait_for_ingestion_job(const std::string& job_id, const WaitForIngestionJobOptions& opts = {});
+    json memory_health();
+    json sync_memory(const std::string& workspace_id, const std::string& agent_id,
+                     const json& files, const std::string& source = "");
 
 private:
     json post(const std::string& path, const json& body);
