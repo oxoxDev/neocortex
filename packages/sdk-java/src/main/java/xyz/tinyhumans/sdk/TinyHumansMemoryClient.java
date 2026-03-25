@@ -202,6 +202,30 @@ public class TinyHumansMemoryClient implements AutoCloseable {
         return post("/memory/conversations", params.toMap());
     }
 
+    /** Recall memory context. POST /memory/memories/context */
+    public Map<String, Object> recallMemoriesContext(Map<String, Object> params) {
+        return post("/memory/memories/context", params != null ? params : Map.of());
+    }
+
+    /** Check memory server health. GET /memory/health */
+    public Map<String, Object> memoryHealth() {
+        return sendGet("/memory/health", null);
+    }
+
+    /** Sync OpenClaw memory files to backend. POST /memory/sync */
+    public Map<String, Object> syncMemory(Map<String, Object> params) {
+        if (params == null || !params.containsKey("workspaceId") || params.get("workspaceId").toString().isEmpty()) {
+            throw new IllegalArgumentException("workspaceId is required");
+        }
+        if (!params.containsKey("agentId") || params.get("agentId").toString().isEmpty()) {
+            throw new IllegalArgumentException("agentId is required");
+        }
+        if (!params.containsKey("files")) {
+            throw new IllegalArgumentException("files is required and must be non-empty");
+        }
+        return post("/memory/sync", params);
+    }
+
     @Override
     public void close() {
         // HttpClient does not require explicit close in Java 11
