@@ -189,6 +189,47 @@ class TinyHumansMemoryClient {
     );
   }
 
+  /// Recall memory context. POST /memory/memories/context
+  Future<Map<String, dynamic>> recallMemoriesContext({
+    String? namespace,
+    double? maxChunks,
+  }) async {
+    final body = <String, dynamic>{};
+    if (namespace != null) body['namespace'] = namespace;
+    if (maxChunks != null) body['maxChunks'] = maxChunks;
+    return _post('/memory/memories/context', body);
+  }
+
+  /// Check memory server health. GET /memory/health
+  Future<Map<String, dynamic>> memoryHealth() async {
+    return _get('/memory/health');
+  }
+
+  /// Sync OpenClaw memory files to backend. POST /memory/sync
+  Future<Map<String, dynamic>> syncMemory({
+    required String workspaceId,
+    required String agentId,
+    required List<Map<String, String>> files,
+    String? source,
+  }) async {
+    if (workspaceId.isEmpty) {
+      throw ArgumentError('workspaceId is required');
+    }
+    if (agentId.isEmpty) {
+      throw ArgumentError('agentId is required');
+    }
+    if (files.isEmpty) {
+      throw ArgumentError('files is required and must be non-empty');
+    }
+    final body = <String, dynamic>{
+      'workspaceId': workspaceId,
+      'agentId': agentId,
+      'files': files,
+    };
+    if (source != null) body['source'] = source;
+    return _post('/memory/sync', body);
+  }
+
   Future<Map<String, dynamic>> _post(
       String path, Map<String, dynamic> body) async {
     final url = Uri.parse('$_baseUrl$path');
