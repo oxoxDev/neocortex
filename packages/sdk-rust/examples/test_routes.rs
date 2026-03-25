@@ -3,8 +3,8 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use tinyhumansai::{
-    BatchDocumentItem, BatchIngestDocumentsParams, ChatMessage, DeleteMemoryParams,
-    IngestDocumentParams, InsertMemoryParams, InteractionLevel, MemoryChatParams,
+    BatchDocumentItem, BatchInsertDocumentsParams, ChatMessage, DeleteMemoryParams,
+    InsertDocumentParams, InsertMemoryParams, InteractionLevel, MemoryChatParams,
     MemoryConversationParams, MemoryInteractionsParams, MemoryThoughtsParams, QueryMemoriesParams,
     QueryMemoryParams, RecallMemoriesContextParams, RecallMemoriesParams, RecallMemoryParams,
     SourceType, TinyHumanConfig, TinyHumansError, TinyHumansMemoryClient,
@@ -95,7 +95,7 @@ async fn wait_for_job(
 ) -> Result<(), TinyHumansError> {
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(timeout_secs);
     loop {
-        let job = client.ingestion_job_status(job_id).await?;
+        let job = client.get_ingestion_job(job_id).await?;
         let state = job
             .data
             .state
@@ -224,9 +224,9 @@ async fn main() {
 
     let single_res = push_result(
         &mut results,
-        "ingest_document",
+        "insert_document",
         client
-            .ingest_document(IngestDocumentParams {
+            .insert_document(InsertDocumentParams {
                 title: "Rust Route Test Single".to_string(),
                 content: "Single document for route test".to_string(),
                 namespace: namespace.clone(),
@@ -249,7 +249,7 @@ async fn main() {
         }
         let _ = push_result(
             &mut results,
-            "ingest_document_job_poll",
+            "insert_document_job_poll",
             wait_for_job(&client, &v, 30).await,
             false,
         );
@@ -257,9 +257,9 @@ async fn main() {
 
     let batch_res = push_result(
         &mut results,
-        "ingest_documents_batch",
+        "insert_documents_batch",
         client
-            .ingest_documents_batch(BatchIngestDocumentsParams {
+            .insert_documents_batch(BatchInsertDocumentsParams {
                 items: vec![
                     BatchDocumentItem {
                         title: "Rust Route Test Batch 1".to_string(),
@@ -283,7 +283,7 @@ async fn main() {
         }
         let _ = push_result(
             &mut results,
-            "ingest_documents_batch_job_poll",
+            "insert_documents_batch_job_poll",
             wait_for_job(&client, &v, 30).await,
             false,
         );
@@ -335,9 +335,9 @@ async fn main() {
 
     push_result(
         &mut results,
-        "query_memories",
+        "query_memory_context",
         client
-            .query_memories(QueryMemoriesParams {
+            .query_memory_context(QueryMemoriesParams {
                 query: "summarize route test docs".to_string(),
                 include_references: Some(true),
                 include_references_snake: None,
@@ -357,9 +357,9 @@ async fn main() {
 
     push_result(
         &mut results,
-        "memory_conversation",
+        "chat_memory_context",
         client
-            .memory_conversation(MemoryConversationParams {
+            .chat_memory_context(MemoryConversationParams {
                 messages: vec![ChatMessage {
                     role: "user".to_string(),
                     content: "Summarize what the route test inserted.".to_string(),
@@ -400,9 +400,9 @@ async fn main() {
 
     push_result(
         &mut results,
-        "memory_thoughts",
+        "recall_thoughts",
         client
-            .memory_thoughts(MemoryThoughtsParams {
+            .recall_thoughts(MemoryThoughtsParams {
                 namespace: Some(namespace.clone()),
                 max_chunks: Some(5),
                 max_chunks_snake: None,
@@ -460,9 +460,9 @@ async fn main() {
 
     push_result(
         &mut results,
-        "memory_chat",
+        "chat_memory",
         client
-            .memory_chat(MemoryChatParams {
+            .chat_memory(MemoryChatParams {
                 messages: vec![ChatMessage {
                     role: "user".to_string(),
                     content: "Reply with ok".to_string(),
@@ -477,13 +477,13 @@ async fn main() {
     if let Some(job_id) = maybe_job_id.clone() {
         push_result(
             &mut results,
-            "ingestion_job_status",
-            client.ingestion_job_status(&job_id).await,
+            "get_ingestion_job",
+            client.get_ingestion_job(&job_id).await,
             false,
         );
     } else {
         results.push((
-            "ingestion_job_status".to_string(),
+            "get_ingestion_job".to_string(),
             true,
             "optional-skip: no jobId returned by ingest routes".to_string(),
         ));

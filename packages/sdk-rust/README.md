@@ -88,20 +88,22 @@ Core memory routes:
 
 Memories/context/chat routes:
 - `recall_memories_context`
-- `memory_thoughts`
+- `recall_thoughts`
 - `interact_memory`
 - `record_interactions`
-- `query_memories`
-- `memory_conversation`
-- `memory_chat`
+- `query_memory_context`
+- `chat_memory_context`
+- `chat_memory`
 
 Documents and admin routes:
-- `ingest_document`
-- `ingest_documents_batch`
+- `insert_document`
+- `insert_documents_batch`
 - `list_documents`
 - `get_document`
 - `delete_document`
-- `ingestion_job_status`
+- `get_ingestion_job`
+- `wait_for_ingestion_job`
+- `get_graph_snapshot`
 - `memory_health`
 - `sync_memory`
 

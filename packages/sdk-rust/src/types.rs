@@ -388,7 +388,7 @@ pub struct ChatUsage {
 
 #[derive(Debug, Clone, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
-pub struct IngestDocumentParams {
+pub struct InsertDocumentParams {
     pub title: String,
     pub content: String,
     pub namespace: String,
@@ -414,16 +414,36 @@ pub struct BatchDocumentItem {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct BatchIngestDocumentsParams {
+pub struct BatchInsertDocumentsParams {
     pub items: Vec<BatchDocumentItem>,
 }
 
 // Document route response schemas are not specified in swagger.
-pub type IngestDocumentResponse = serde_json::Value;
-pub type BatchIngestDocumentsResponse = serde_json::Value;
+pub type InsertDocumentResponse = serde_json::Value;
+pub type BatchInsertDocumentsResponse = serde_json::Value;
 pub type ListDocumentsResponse = serde_json::Value;
 pub type GetDocumentResponse = serde_json::Value;
 pub type DeleteDocumentResponse = serde_json::Value;
+
+// ---------- Graph snapshot ----------
+
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct GetGraphSnapshotParams {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub namespace: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mode: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub seed_limit: Option<u32>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct GetGraphSnapshotResponse {
+    pub success: bool,
+    pub data: serde_json::Value,
+}
 
 // ---------- Sync ----------
 

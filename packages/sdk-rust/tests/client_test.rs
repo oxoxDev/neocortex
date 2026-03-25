@@ -208,7 +208,7 @@ async fn api_error_returns_tinyhumans_error() {
 }
 
 #[tokio::test]
-async fn memory_chat_posts_correctly() {
+async fn chat_memory_posts_correctly() {
     let mut server = Server::new_async().await;
     let mock = server
         .mock("POST", "/memory/chat")
@@ -224,7 +224,7 @@ async fn memory_chat_posts_correctly() {
         TinyHumansMemoryClient::new(TinyHumanConfig::new("token").with_base_url(server.url()))
             .unwrap();
     let res = client
-        .memory_chat(MemoryChatParams {
+        .chat_memory(MemoryChatParams {
             messages: vec![ChatMessage {
                 role: "user".into(),
                 content: "hello".into(),

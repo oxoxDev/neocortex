@@ -198,7 +198,7 @@ impl TinyHumansMemoryClient {
     }
 
     /// Generate reflective thoughts from recalled memory context. POST /memory/memories/thoughts
-    pub async fn memory_thoughts(
+    pub async fn recall_thoughts(
         &self,
         params: MemoryThoughtsParams,
     ) -> Result<MemoryThoughtsResponse, TinyHumansError> {
@@ -224,7 +224,7 @@ impl TinyHumansMemoryClient {
     }
 
     /// Query memory context (alias route). POST /memory/queries
-    pub async fn query_memories(
+    pub async fn query_memory_context(
         &self,
         params: QueryMemoriesParams,
     ) -> Result<QueryMemoriesResponse, TinyHumansError> {
@@ -237,7 +237,7 @@ impl TinyHumansMemoryClient {
     }
 
     /// Chat with memory context. POST /memory/conversations
-    pub async fn memory_conversation(
+    pub async fn chat_memory_context(
         &self,
         params: MemoryConversationParams,
     ) -> Result<MemoryConversationResponse, TinyHumansError> {
@@ -250,7 +250,7 @@ impl TinyHumansMemoryClient {
     }
 
     /// Chat with DeltaNet memory cache. POST /memory/chat
-    pub async fn memory_chat(
+    pub async fn chat_memory(
         &self,
         params: MemoryChatParams,
     ) -> Result<MemoryChatResponse, TinyHumansError> {
@@ -262,11 +262,11 @@ impl TinyHumansMemoryClient {
         self.post("/memory/chat", &params).await
     }
 
-    /// Ingest a single memory document. POST /memory/documents
-    pub async fn ingest_document(
+    /// Insert a single memory document. POST /memory/documents
+    pub async fn insert_document(
         &self,
-        params: IngestDocumentParams,
-    ) -> Result<IngestDocumentResponse, TinyHumansError> {
+        params: InsertDocumentParams,
+    ) -> Result<InsertDocumentResponse, TinyHumansError> {
         if params.title.is_empty() {
             return Err(TinyHumansError::Validation(
                 "title is required and must be a string".into(),
@@ -285,11 +285,11 @@ impl TinyHumansMemoryClient {
         self.post("/memory/documents", &params).await
     }
 
-    /// Ingest multiple memory documents in batch. POST /memory/documents/batch
-    pub async fn ingest_documents_batch(
+    /// Insert multiple memory documents in batch. POST /memory/documents/batch
+    pub async fn insert_documents_batch(
         &self,
-        params: BatchIngestDocumentsParams,
-    ) -> Result<BatchIngestDocumentsResponse, TinyHumansError> {
+        params: BatchInsertDocumentsParams,
+    ) -> Result<BatchInsertDocumentsResponse, TinyHumansError> {
         if params.items.is_empty() {
             return Err(TinyHumansError::Validation(
                 "items must be a non-empty list".into(),
@@ -364,7 +364,7 @@ impl TinyHumansMemoryClient {
     }
 
     /// Get memory ingestion job status. GET /memory/ingestion/jobs/{jobId}
-    pub async fn ingestion_job_status(
+    pub async fn get_ingestion_job(
         &self,
         job_id: &str,
     ) -> Result<IngestionJobStatusResponse, TinyHumansError> {
@@ -372,6 +372,110 @@ impl TinyHumansMemoryClient {
             return Err(TinyHumansError::Validation("job_id is required".into()));
         }
         self.get(&format!("/memory/ingestion/jobs/{job_id}")).await
+    }
+
+    /// Get admin graph snapshot. GET /memory/admin/graph-snapshot
+    pub async fn get_graph_snapshot(
+        &self,
+        params: GetGraphSnapshotParams,
+    ) -> Result<GetGraphSnapshotResponse, TinyHumansError> {
+        let mut qs_parts: Vec<String> = Vec::new();
+        if let Some(ns) = &params.namespace {
+            qs_parts.push(format!("namespace={ns}"));
+        }
+        if let Some(mode) = &params.mode {
+            qs_parts.push(format!("mode={mode}"));
+        }
+        if let Some(limit) = params.limit {
+            qs_parts.push(format!("limit={limit}"));
+        }
+        if let Some(seed_limit) = params.seed_limit {
+            qs_parts.push(format!("seed_limit={seed_limit}"));
+        }
+        let qs = if qs_parts.is_empty() {
+            String::new()
+        } else {
+            format!("?{}", qs_parts.join("&"))
+        };
+        self.get(&format!("/memory/admin/graph-snapshot{qs}")).await
+    }
+
+    /// Poll an ingestion job until it completes, fails, or times out.
+    pub async fn wait_for_ingestion_job(
+        &self,
+        job_id: &str,
+        timeout_ms: Option<u64>,
+        poll_interval_ms: Option<u64>,
+    ) -> Result<IngestionJobStatusResponse, TinyHumansError> {
+        if job_id.trim().is_empty() {
+            return Err(TinyHumansError::Validation("jobId is required".into()));
+        }
+        let timeout = timeout_ms.unwrap_or(30_000);
+        let interval = poll_interval_ms.unwrap_or(1_000);
+        if timeout == 0 {
+            return Err(TinyHumansError::Validation("timeoutMs must be > 0".into()));
+        }
+        if interval == 0 {
+            return Err(TinyHumansError::Validation(
+                "pollIntervalMs must be > 0".into(),
+            ));
+        }
+
+        let pending: std::collections::HashSet<&str> = [
+            "pending",
+            "queued",
+            "processing",
+            "in_progress",
+            "in-progress",
+            "started",
+            "start",
+        ]
+        .into_iter()
+        .collect();
+        let completed: std::collections::HashSet<&str> =
+            ["completed", "done", "succeeded", "success"]
+                .into_iter()
+                .collect();
+        let failed: std::collections::HashSet<&str> =
+            ["failed", "error", "cancelled", "canceled"]
+                .into_iter()
+                .collect();
+
+        let deadline = std::time::Instant::now() + std::time::Duration::from_millis(timeout);
+        let mut last: Option<IngestionJobStatusResponse> = None;
+
+        while std::time::Instant::now() < deadline {
+            let job = self.get_ingestion_job(job_id).await?;
+            let state_raw = job.data.state.clone().unwrap_or_default();
+            let state = state_raw.trim().to_lowercase();
+
+            if completed.contains(state.as_str()) {
+                return Ok(job);
+            }
+            if failed.contains(state.as_str()) {
+                return Err(TinyHumansError::Api {
+                    message: format!("Ingestion job {job_id} failed (state={state_raw})"),
+                    status: 500,
+                    body: None,
+                });
+            }
+            if !state.is_empty() && !pending.contains(state.as_str()) {
+                return Ok(job);
+            }
+            last = Some(job);
+            tokio::time::sleep(std::time::Duration::from_millis(interval)).await;
+        }
+
+        let last_state = last
+            .and_then(|l| l.data.state)
+            .unwrap_or_else(|| "unknown".into());
+        Err(TinyHumansError::Api {
+            message: format!(
+                "Ingestion job {job_id} timed out after {timeout}ms (last_state={last_state})"
+            ),
+            status: 408,
+            body: None,
+        })
     }
 
     fn validate_interactions(
