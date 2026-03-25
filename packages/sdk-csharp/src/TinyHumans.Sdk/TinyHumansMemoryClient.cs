@@ -206,6 +206,40 @@ public sealed class TinyHumansMemoryClient : IDisposable
         throw new TimeoutException($"Ingestion job {jobId} did not complete within {opts.MaxAttempts} attempts");
     }
 
+    /// <summary>Recall memory context. POST /memory/memories/context</summary>
+    public async Task<JsonElement> RecallMemoriesContextAsync(string? ns = null, double? maxChunks = null)
+    {
+        var body = new Dictionary<string, object?>();
+        if (ns != null) body["namespace"] = ns;
+        if (maxChunks.HasValue) body["maxChunks"] = maxChunks.Value;
+        return await PostAsync("/memory/memories/context", body);
+    }
+
+    /// <summary>Check memory server health. GET /memory/health</summary>
+    public async Task<JsonElement> MemoryHealthAsync()
+    {
+        return await GetAsync("/memory/health");
+    }
+
+    /// <summary>Sync OpenClaw memory files to backend. POST /memory/sync</summary>
+    public async Task<JsonElement> SyncMemoryAsync(string workspaceId, string agentId, List<Dictionary<string, string>> files, string? source = null)
+    {
+        if (string.IsNullOrWhiteSpace(workspaceId))
+            throw new ArgumentException("workspaceId is required");
+        if (string.IsNullOrWhiteSpace(agentId))
+            throw new ArgumentException("agentId is required");
+        if (files == null || files.Count == 0)
+            throw new ArgumentException("files is required and must be non-empty");
+        var body = new Dictionary<string, object?>
+        {
+            ["workspaceId"] = workspaceId,
+            ["agentId"] = agentId,
+            ["files"] = files,
+        };
+        if (source != null) body["source"] = source;
+        return await PostAsync("/memory/sync", body);
+    }
+
     private async Task<JsonElement> PostAsync(string path, Dictionary<string, object?> body)
     {
         var json = JsonSerializer.Serialize(body, new JsonSerializerOptions
