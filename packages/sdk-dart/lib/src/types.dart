@@ -294,3 +294,294 @@ class RecallMemoriesResponse {
     );
   }
 }
+
+// ── Chat ──
+
+class ChatMemoryParams {
+  final List<Map<String, String>> messages;
+  final String? namespace;
+  final double? temperature;
+  final int? maxTokens;
+  final String? model;
+
+  ChatMemoryParams({
+    required this.messages,
+    this.namespace,
+    this.temperature,
+    this.maxTokens,
+    this.model,
+  });
+
+  void validate() {
+    if (messages.isEmpty) {
+      throw ArgumentError('messages must not be empty');
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{
+      'messages': messages,
+    };
+    if (namespace != null) map['namespace'] = namespace;
+    if (temperature != null) map['temperature'] = temperature;
+    if (maxTokens != null) map['maxTokens'] = maxTokens;
+    if (model != null) map['model'] = model;
+    return map;
+  }
+}
+
+// ── Interactions ──
+
+class InteractMemoryParams {
+  final String namespace;
+  final List<String> entityNames;
+  final String? description;
+  final String? interactionLevel;
+  final List<String>? interactionLevels;
+  final int? timestamp;
+
+  InteractMemoryParams({
+    required this.namespace,
+    required this.entityNames,
+    this.description,
+    this.interactionLevel,
+    this.interactionLevels,
+    this.timestamp,
+  });
+
+  void validate() {
+    if (namespace.trim().isEmpty) {
+      throw ArgumentError('namespace is required');
+    }
+    if (entityNames.isEmpty) {
+      throw ArgumentError('entityNames must not be empty');
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{
+      'namespace': namespace,
+      'entityNames': entityNames,
+    };
+    if (description != null) map['description'] = description;
+    if (interactionLevel != null) {
+      map['interactionLevel'] = interactionLevel;
+    }
+    if (interactionLevels != null) {
+      map['interactionLevels'] = interactionLevels;
+    }
+    if (timestamp != null) map['timestamp'] = timestamp;
+    return map;
+  }
+}
+
+// ── Advanced Recall ──
+
+class RecallThoughtsParams {
+  final String? namespace;
+  final int? maxChunks;
+  final double? temperature;
+  final int? randomnessSeed;
+  final bool? persist;
+  final bool? enablePredictionCheck;
+  final String? thoughtPrompt;
+
+  RecallThoughtsParams({
+    this.namespace,
+    this.maxChunks,
+    this.temperature,
+    this.randomnessSeed,
+    this.persist,
+    this.enablePredictionCheck,
+    this.thoughtPrompt,
+  });
+
+  void validate() {}
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{};
+    if (namespace != null) map['namespace'] = namespace;
+    if (maxChunks != null) map['maxChunks'] = maxChunks;
+    if (temperature != null) map['temperature'] = temperature;
+    if (randomnessSeed != null) map['randomnessSeed'] = randomnessSeed;
+    if (persist != null) map['persist'] = persist;
+    if (enablePredictionCheck != null) {
+      map['enablePredictionCheck'] = enablePredictionCheck;
+    }
+    if (thoughtPrompt != null) map['thoughtPrompt'] = thoughtPrompt;
+    return map;
+  }
+}
+
+class QueryMemoryContextParams {
+  final String query;
+  final String? namespace;
+  final int? maxChunks;
+  final bool? includeReferences;
+  final List<String>? documentIds;
+  final bool? recallOnly;
+  final String? llmQuery;
+
+  QueryMemoryContextParams({
+    required this.query,
+    this.namespace,
+    this.maxChunks,
+    this.includeReferences,
+    this.documentIds,
+    this.recallOnly,
+    this.llmQuery,
+  });
+
+  void validate() {
+    if (query.trim().isEmpty) {
+      throw ArgumentError('query is required');
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{
+      'query': query,
+    };
+    if (namespace != null) map['namespace'] = namespace;
+    if (maxChunks != null) map['maxChunks'] = maxChunks;
+    if (includeReferences != null) {
+      map['includeReferences'] = includeReferences;
+    }
+    if (documentIds != null) map['documentIds'] = documentIds;
+    if (recallOnly != null) map['recallOnly'] = recallOnly;
+    if (llmQuery != null) map['llmQuery'] = llmQuery;
+    return map;
+  }
+}
+
+// ── Documents ──
+
+class InsertDocumentParams {
+  final String title;
+  final String content;
+  final String namespace;
+  final Map<String, dynamic>? metadata;
+  final String? sourceType;
+
+  InsertDocumentParams({
+    required this.title,
+    required this.content,
+    required this.namespace,
+    this.metadata,
+    this.sourceType,
+  });
+
+  void validate() {
+    if (title.trim().isEmpty) {
+      throw ArgumentError('title is required');
+    }
+    if (content.trim().isEmpty) {
+      throw ArgumentError('content is required');
+    }
+    if (namespace.trim().isEmpty) {
+      throw ArgumentError('namespace is required');
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{
+      'title': title,
+      'content': content,
+      'namespace': namespace,
+    };
+    if (metadata != null) map['metadata'] = metadata;
+    if (sourceType != null) map['sourceType'] = sourceType;
+    return map;
+  }
+}
+
+class InsertDocumentsBatchParams {
+  final List<InsertDocumentParams> documents;
+
+  InsertDocumentsBatchParams({required this.documents});
+
+  void validate() {
+    if (documents.isEmpty) {
+      throw ArgumentError('documents must not be empty');
+    }
+    for (final doc in documents) {
+      doc.validate();
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'items': documents.map((d) => d.toJson()).toList(),
+    };
+  }
+}
+
+class ListDocumentsParams {
+  final String? namespace;
+  final int? page;
+  final int? limit;
+
+  ListDocumentsParams({this.namespace, this.page, this.limit});
+
+  Map<String, String> toQueryParams() {
+    final map = <String, String>{};
+    if (namespace != null) map['namespace'] = namespace!;
+    if (page != null) map['page'] = page.toString();
+    if (limit != null) map['limit'] = limit.toString();
+    return map;
+  }
+}
+
+class GetDocumentParams {
+  final String id;
+  final String? namespace;
+
+  GetDocumentParams({required this.id, this.namespace});
+
+  void validate() {
+    if (id.trim().isEmpty) {
+      throw ArgumentError('id is required');
+    }
+  }
+
+  Map<String, String> toQueryParams() {
+    final map = <String, String>{};
+    if (namespace != null) map['namespace'] = namespace!;
+    return map;
+  }
+}
+
+// ── Admin & Utility ──
+
+class GraphSnapshotParams {
+  final String? namespace;
+  final String? mode;
+  final int? limit;
+  final int? seedLimit;
+
+  GraphSnapshotParams({
+    this.namespace,
+    this.mode,
+    this.limit,
+    this.seedLimit,
+  });
+
+  Map<String, String> toQueryParams() {
+    final map = <String, String>{};
+    if (namespace != null) map['namespace'] = namespace!;
+    if (mode != null) map['mode'] = mode!;
+    if (limit != null) map['limit'] = limit.toString();
+    if (seedLimit != null) map['seedLimit'] = seedLimit.toString();
+    return map;
+  }
+}
+
+class WaitForIngestionJobOptions {
+  final int intervalMs;
+  final int maxAttempts;
+
+  WaitForIngestionJobOptions({
+    this.intervalMs = 2000,
+    this.maxAttempts = 30,
+  });
+}

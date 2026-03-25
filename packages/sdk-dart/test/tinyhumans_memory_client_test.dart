@@ -59,6 +59,38 @@ void main() {
     });
   });
 
+  // ── Model ID ──
+
+  group('modelId', () {
+    test('sends default X-Model-Id header', () async {
+      http.Request? captured;
+      final client = createClient(
+        onRequest: (r) => captured = r,
+      );
+
+      await client.recallMemory();
+
+      expect(captured, isNotNull);
+      expect(captured!.headers['x-model-id'], equals('neocortex-mk1'));
+    });
+
+    test('sends custom X-Model-Id header', () async {
+      http.Request? captured;
+      final client = TinyHumansMemoryClient(
+        'test-token',
+        modelId: 'custom-model',
+        baseUrl: 'https://test.example.com',
+        httpClient: mockClient(200, '{"success":true,"data":{}}',
+            onRequest: (r) => captured = r),
+      );
+
+      await client.recallMemory();
+
+      expect(captured, isNotNull);
+      expect(captured!.headers['x-model-id'], equals('custom-model'));
+    });
+  });
+
   // ── InsertMemory ──
 
   group('insertMemory', () {
@@ -82,11 +114,13 @@ void main() {
       expect(captured, isNotNull);
       expect(captured!.method, equals('POST'));
       expect(captured!.url.toString(),
-          endsWith('/v1/memory/insert'));
+          endsWith('/memory/insert'));
       expect(captured!.headers['authorization'],
           equals('Bearer test-token'));
       expect(captured!.headers['content-type'],
           equals('application/json'));
+      expect(captured!.headers['x-model-id'],
+          equals('neocortex-mk1'));
 
       final reqBody = jsonDecode(captured!.body) as Map<String, dynamic>;
       expect(reqBody['title'], equals('t1'));
@@ -276,6 +310,369 @@ void main() {
             .recallMemories(RecallMemoriesParams(minRetention: -0.1)),
         throwsA(isA<ArgumentError>()),
       );
+    });
+  });
+
+  // ── Chat ──
+
+  group('chatMemory', () {
+    test('sends correct request', () async {
+      http.Request? captured;
+      final client = createClient(
+        body: '{"success":true,"data":{"response":"hi"}}',
+        onRequest: (r) => captured = r,
+      );
+
+      await client.chatMemory(ChatMemoryParams(
+        messages: [{'role': 'user', 'content': 'Hello'}],
+        namespace: 'ns',
+      ));
+
+      expect(captured, isNotNull);
+      expect(captured!.method, equals('POST'));
+      expect(captured!.url.toString(), endsWith('/memory/chat'));
+      final body = jsonDecode(captured!.body) as Map<String, dynamic>;
+      expect(body['messages'], hasLength(1));
+      expect(body['namespace'], equals('ns'));
+    });
+
+    test('throws on empty messages', () {
+      final client = createClient();
+      expect(
+        () => client.chatMemory(ChatMemoryParams(messages: [])),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+  });
+
+  group('chatMemoryContext', () {
+    test('sends to /memory/conversations', () async {
+      http.Request? captured;
+      final client = createClient(
+        onRequest: (r) => captured = r,
+      );
+
+      await client.chatMemoryContext(ChatMemoryParams(
+        messages: [{'role': 'user', 'content': 'Hi'}],
+      ));
+
+      expect(captured!.url.toString(), endsWith('/memory/conversations'));
+    });
+  });
+
+  // ── Interactions ──
+
+  group('interactMemory', () {
+    test('sends correct request with entityNames', () async {
+      http.Request? captured;
+      final client = createClient(
+        onRequest: (r) => captured = r,
+      );
+
+      await client.interactMemory(InteractMemoryParams(
+        namespace: 'ns',
+        entityNames: ['ENTITY_A', 'ENTITY_B'],
+      ));
+
+      expect(captured, isNotNull);
+      expect(captured!.method, equals('POST'));
+      expect(captured!.url.toString(), endsWith('/memory/interact'));
+      final body = jsonDecode(captured!.body) as Map<String, dynamic>;
+      expect(body['entityNames'], equals(['ENTITY_A', 'ENTITY_B']));
+      expect(body['namespace'], equals('ns'));
+    });
+
+    test('throws on empty namespace', () {
+      final client = createClient();
+      expect(
+        () => client.interactMemory(InteractMemoryParams(
+          namespace: '',
+          entityNames: ['E'],
+        )),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    test('throws on empty entityNames', () {
+      final client = createClient();
+      expect(
+        () => client.interactMemory(InteractMemoryParams(
+          namespace: 'ns',
+          entityNames: [],
+        )),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+  });
+
+  group('recordInteractions', () {
+    test('sends to /memory/interactions', () async {
+      http.Request? captured;
+      final client = createClient(
+        onRequest: (r) => captured = r,
+      );
+
+      await client.recordInteractions(InteractMemoryParams(
+        namespace: 'ns',
+        entityNames: ['E'],
+      ));
+
+      expect(captured!.url.toString(), endsWith('/memory/interactions'));
+    });
+  });
+
+  // ── Advanced Recall ──
+
+  group('recallThoughts', () {
+    test('sends to /memory/memories/thoughts', () async {
+      http.Request? captured;
+      final client = createClient(
+        onRequest: (r) => captured = r,
+      );
+
+      await client.recallThoughts(RecallThoughtsParams(namespace: 'ns'));
+
+      expect(captured!.method, equals('POST'));
+      expect(
+          captured!.url.toString(), endsWith('/memory/memories/thoughts'));
+      final body = jsonDecode(captured!.body) as Map<String, dynamic>;
+      expect(body['namespace'], equals('ns'));
+    });
+
+    test('works with no params', () async {
+      http.Request? captured;
+      final client = createClient(
+        onRequest: (r) => captured = r,
+      );
+
+      await client.recallThoughts();
+
+      expect(captured!.url.toString(), endsWith('/memory/memories/thoughts'));
+    });
+  });
+
+  group('queryMemoryContext', () {
+    test('sends correct request', () async {
+      http.Request? captured;
+      final client = createClient(
+        onRequest: (r) => captured = r,
+      );
+
+      await client.queryMemoryContext(QueryMemoryContextParams(
+        query: 'test query',
+        namespace: 'ns',
+      ));
+
+      expect(captured!.method, equals('POST'));
+      expect(captured!.url.toString(), endsWith('/memory/queries'));
+      final body = jsonDecode(captured!.body) as Map<String, dynamic>;
+      expect(body['query'], equals('test query'));
+      expect(body['namespace'], equals('ns'));
+    });
+
+    test('throws on empty query', () {
+      final client = createClient();
+      expect(
+        () => client.queryMemoryContext(
+            QueryMemoryContextParams(query: '')),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+  });
+
+  // ── Documents ──
+
+  group('insertDocument', () {
+    test('sends correct request', () async {
+      http.Request? captured;
+      final client = createClient(
+        onRequest: (r) => captured = r,
+      );
+
+      await client.insertDocument(InsertDocumentParams(
+        title: 'Doc Title',
+        content: 'Doc content',
+        namespace: 'ns',
+      ));
+
+      expect(captured!.method, equals('POST'));
+      expect(captured!.url.toString(), endsWith('/memory/documents'));
+      final body = jsonDecode(captured!.body) as Map<String, dynamic>;
+      expect(body['title'], equals('Doc Title'));
+      expect(body['content'], equals('Doc content'));
+      expect(body['namespace'], equals('ns'));
+    });
+
+    test('throws on empty title', () {
+      final client = createClient();
+      expect(
+        () => client.insertDocument(InsertDocumentParams(
+          title: '',
+          content: 'c',
+          namespace: 'ns',
+        )),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+  });
+
+  group('insertDocumentsBatch', () {
+    test('serializes documents as items', () async {
+      http.Request? captured;
+      final client = createClient(
+        onRequest: (r) => captured = r,
+      );
+
+      await client.insertDocumentsBatch(InsertDocumentsBatchParams(
+        documents: [
+          InsertDocumentParams(
+              title: 'D1', content: 'C1', namespace: 'ns'),
+          InsertDocumentParams(
+              title: 'D2', content: 'C2', namespace: 'ns'),
+        ],
+      ));
+
+      expect(captured!.url.toString(), endsWith('/memory/documents/batch'));
+      final body = jsonDecode(captured!.body) as Map<String, dynamic>;
+      expect(body['items'], hasLength(2));
+      expect(body.containsKey('documents'), isFalse);
+    });
+
+    test('throws on empty documents', () {
+      final client = createClient();
+      expect(
+        () => client.insertDocumentsBatch(
+            InsertDocumentsBatchParams(documents: [])),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+  });
+
+  group('listDocuments', () {
+    test('sends GET with query params', () async {
+      http.Request? captured;
+      final client = createClient(
+        onRequest: (r) => captured = r,
+      );
+
+      await client.listDocuments(
+          ListDocumentsParams(namespace: 'ns', page: 1, limit: 10));
+
+      expect(captured!.method, equals('GET'));
+      expect(captured!.url.toString(), contains('/memory/documents'));
+      expect(captured!.url.queryParameters['namespace'], equals('ns'));
+      expect(captured!.url.queryParameters['page'], equals('1'));
+      expect(captured!.url.queryParameters['limit'], equals('10'));
+    });
+  });
+
+  group('getDocument', () {
+    test('sends GET with id in path', () async {
+      http.Request? captured;
+      final client = createClient(
+        onRequest: (r) => captured = r,
+      );
+
+      await client.getDocument(
+          GetDocumentParams(id: 'doc-123', namespace: 'ns'));
+
+      expect(captured!.method, equals('GET'));
+      expect(captured!.url.toString(), contains('/memory/documents/doc-123'));
+      expect(captured!.url.queryParameters['namespace'], equals('ns'));
+    });
+
+    test('throws on empty id', () {
+      final client = createClient();
+      expect(
+        () => client.getDocument(GetDocumentParams(id: '')),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+  });
+
+  group('deleteDocument', () {
+    test('sends DELETE with id in path', () async {
+      http.Request? captured;
+      final client = createClient(
+        onRequest: (r) => captured = r,
+      );
+
+      await client.deleteDocument('doc-456', 'ns');
+
+      expect(captured!.method, equals('DELETE'));
+      expect(captured!.url.toString(), contains('/memory/documents/doc-456'));
+      expect(captured!.url.queryParameters['namespace'], equals('ns'));
+    });
+
+    test('throws on empty documentId', () {
+      final client = createClient();
+      expect(
+        () => client.deleteDocument(''),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+  });
+
+  // ── Admin & Utility ──
+
+  group('getGraphSnapshot', () {
+    test('sends GET with query params', () async {
+      http.Request? captured;
+      final client = createClient(
+        onRequest: (r) => captured = r,
+      );
+
+      await client.getGraphSnapshot(
+          GraphSnapshotParams(namespace: 'ns'));
+
+      expect(captured!.method, equals('GET'));
+      expect(captured!.url.toString(),
+          contains('/memory/admin/graph-snapshot'));
+      expect(captured!.url.queryParameters['namespace'], equals('ns'));
+    });
+  });
+
+  group('getIngestionJob', () {
+    test('sends GET with jobId in path', () async {
+      http.Request? captured;
+      final client = createClient(
+        onRequest: (r) => captured = r,
+      );
+
+      await client.getIngestionJob('job-789');
+
+      expect(captured!.method, equals('GET'));
+      expect(captured!.url.toString(),
+          contains('/memory/ingestion/jobs/job-789'));
+    });
+
+    test('throws on empty jobId', () {
+      final client = createClient();
+      expect(
+        () => client.getIngestionJob(''),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+  });
+
+  group('waitForIngestionJob', () {
+    test('returns on completed state', () async {
+      final client = createClient(
+        body:
+            '{"data":{"state":"completed","jobId":"j1"}}',
+      );
+
+      final result = await client.waitForIngestionJob('j1');
+      expect(result['data']['state'], equals('completed'));
+    });
+
+    test('returns on failed state', () async {
+      final client = createClient(
+        body: '{"data":{"state":"failed","jobId":"j1"}}',
+      );
+
+      final result = await client.waitForIngestionJob('j1');
+      expect(result['data']['state'], equals('failed'));
     });
   });
 
