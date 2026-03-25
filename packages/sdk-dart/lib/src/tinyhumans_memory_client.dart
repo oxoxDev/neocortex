@@ -32,27 +32,27 @@ class TinyHumansMemoryClient {
 
   Future<InsertMemoryResponse> insertMemory(InsertMemoryParams params) async {
     params.validate();
-    final result = await _post('/v1/memory/insert', params.toJson());
+    final result = await _post('/memory/insert', params.toJson());
     return InsertMemoryResponse.fromJson(result);
   }
 
   Future<RecallMemoryResponse> recallMemory([RecallMemoryParams? params]) async {
     params ??= RecallMemoryParams();
     params.validate();
-    final result = await _post('/v1/memory/recall', params.toJson());
+    final result = await _post('/memory/recall', params.toJson());
     return RecallMemoryResponse.fromJson(result);
   }
 
   Future<DeleteMemoryResponse> deleteMemory([DeleteMemoryParams? params]) async {
     params ??= DeleteMemoryParams();
     params.validate();
-    final result = await _post('/v1/memory/admin/delete', params.toJson());
+    final result = await _post('/memory/admin/delete', params.toJson());
     return DeleteMemoryResponse.fromJson(result);
   }
 
   Future<QueryMemoryResponse> queryMemory(QueryMemoryParams params) async {
     params.validate();
-    final result = await _post('/v1/memory/query', params.toJson());
+    final result = await _post('/memory/query', params.toJson());
     return QueryMemoryResponse.fromJson(result);
   }
 
@@ -60,7 +60,7 @@ class TinyHumansMemoryClient {
       [RecallMemoriesParams? params]) async {
     params ??= RecallMemoriesParams();
     params.validate();
-    final result = await _post('/v1/memory/memories/recall', params.toJson());
+    final result = await _post('/memory/memories/recall', params.toJson());
     return RecallMemoriesResponse.fromJson(result);
   }
 

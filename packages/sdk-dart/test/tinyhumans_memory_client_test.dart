@@ -82,7 +82,7 @@ void main() {
       expect(captured, isNotNull);
       expect(captured!.method, equals('POST'));
       expect(captured!.url.toString(),
-          endsWith('/v1/memory/insert'));
+          endsWith('/memory/insert'));
       expect(captured!.headers['authorization'],
           equals('Bearer test-token'));
       expect(captured!.headers['content-type'],
