@@ -351,6 +351,54 @@ export interface RecallMemoriesResponse {
   };
 }
 
+// ---------- Memories context ----------
+
+export interface RecallMemoriesContextParams {
+  namespace?: string;
+  maxChunks?: number;
+}
+
+export type RecallMemoriesContextResponse = {
+  success: boolean;
+  data: Record<string, unknown>;
+};
+
+// ---------- Health ----------
+
+export interface MemoryHealthResponse {
+  success: boolean;
+  data: {
+    status?: string;
+    cache_stats?: Record<string, unknown>;
+    uptime_seconds?: number;
+  };
+}
+
+// ---------- Sync ----------
+
+export type SyncSource = "startup" | "agent_end";
+
+export interface SyncFile {
+  filePath: string;
+  content: string;
+  timestamp: string;
+  hash: string;
+}
+
+export interface SyncMemoryParams {
+  workspaceId: string;
+  agentId: string;
+  source?: SyncSource;
+  files: SyncFile[];
+}
+
+export interface SyncMemoryResponse {
+  success: boolean;
+  data: {
+    synced: number;
+  };
+}
+
 // ---------- Error ----------
 
 export interface ErrorResponse {
@@ -656,6 +704,31 @@ export class TinyHumansMemoryClient {
     if (!params.entityNames || !Array.isArray(params.entityNames))
       throw new Error("entityNames array is required");
     return this.post<InteractMemoryResponse>("/memory/interactions", params);
+  }
+
+  /** Recall memory context. POST /memory/memories/context */
+  async recallMemoriesContext(
+    params: RecallMemoriesContextParams = {},
+  ): Promise<RecallMemoriesContextResponse> {
+    return this.post<RecallMemoriesContextResponse>(
+      "/memory/memories/context",
+      params,
+    );
+  }
+
+  /** Check memory server health. GET /memory/health */
+  async memoryHealth(): Promise<MemoryHealthResponse> {
+    return this.get<MemoryHealthResponse>("/memory/health");
+  }
+
+  /** Sync OpenClaw memory files to backend. POST /memory/sync */
+  async syncMemory(params: SyncMemoryParams): Promise<SyncMemoryResponse> {
+    if (!params.workspaceId)
+      throw new Error("workspaceId is required");
+    if (!params.agentId) throw new Error("agentId is required");
+    if (!params.files || !Array.isArray(params.files) || params.files.length === 0)
+      throw new Error("files is required and must be non-empty");
+    return this.post<SyncMemoryResponse>("/memory/sync", params);
   }
 
   // --- Helpers ---
