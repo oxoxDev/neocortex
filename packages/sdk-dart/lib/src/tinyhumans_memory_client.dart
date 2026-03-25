@@ -1,3 +1,4 @@
+import 'dart:async' show TimeoutException;
 import 'dart:convert';
 import 'dart:io' show Platform;
 
@@ -110,6 +111,82 @@ class TinyHumansMemoryClient {
       QueryMemoryContextParams params) async {
     params.validate();
     return await _post('/memory/queries', params.toJson());
+  }
+
+  // ── Documents ──
+
+  Future<Map<String, dynamic>> insertDocument(
+      InsertDocumentParams params) async {
+    params.validate();
+    return await _post('/memory/documents', params.toJson());
+  }
+
+  Future<Map<String, dynamic>> insertDocumentsBatch(
+      InsertDocumentsBatchParams params) async {
+    params.validate();
+    return await _post('/memory/documents/batch', params.toJson());
+  }
+
+  Future<Map<String, dynamic>> listDocuments(
+      [ListDocumentsParams? params]) async {
+    params ??= ListDocumentsParams();
+    return await _get('/memory/documents', params.toQueryParams());
+  }
+
+  Future<Map<String, dynamic>> getDocument(GetDocumentParams params) async {
+    params.validate();
+    return await _get(
+      '/memory/documents/${Uri.encodeComponent(params.id)}',
+      params.toQueryParams(),
+    );
+  }
+
+  Future<Map<String, dynamic>> deleteDocument(String documentId,
+      [String? namespace]) async {
+    if (documentId.trim().isEmpty) {
+      throw ArgumentError('documentId is required');
+    }
+    final queryParams = <String, String>{};
+    if (namespace != null) queryParams['namespace'] = namespace;
+    return await _delete(
+      '/memory/documents/${Uri.encodeComponent(documentId)}',
+      queryParams,
+    );
+  }
+
+  // ── Admin & Utility ──
+
+  Future<Map<String, dynamic>> getGraphSnapshot(
+      [GraphSnapshotParams? params]) async {
+    params ??= GraphSnapshotParams();
+    return await _get('/memory/admin/graph-snapshot', params.toQueryParams());
+  }
+
+  Future<Map<String, dynamic>> getIngestionJob(String jobId) async {
+    if (jobId.trim().isEmpty) {
+      throw ArgumentError('jobId is required');
+    }
+    return await _get(
+        '/memory/ingestion/jobs/${Uri.encodeComponent(jobId)}');
+  }
+
+  Future<Map<String, dynamic>> waitForIngestionJob(String jobId,
+      [WaitForIngestionJobOptions? opts]) async {
+    opts ??= WaitForIngestionJobOptions();
+    for (var i = 0; i < opts.maxAttempts; i++) {
+      final result = await getIngestionJob(jobId);
+      final data = result['data'] as Map<String, dynamic>?;
+      if (data != null) {
+        final state = data['state'] as String?;
+        if (state == 'completed' || state == 'failed') {
+          return result;
+        }
+      }
+      await Future.delayed(Duration(milliseconds: opts.intervalMs));
+    }
+    throw TimeoutException(
+      'Ingestion job $jobId did not complete within ${opts.maxAttempts} attempts',
+    );
   }
 
   Future<Map<String, dynamic>> _post(
