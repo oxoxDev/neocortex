@@ -313,6 +313,114 @@ void main() {
     });
   });
 
+  // ── Chat ──
+
+  group('chatMemory', () {
+    test('sends correct request', () async {
+      http.Request? captured;
+      final client = createClient(
+        body: '{"success":true,"data":{"response":"hi"}}',
+        onRequest: (r) => captured = r,
+      );
+
+      await client.chatMemory(ChatMemoryParams(
+        messages: [{'role': 'user', 'content': 'Hello'}],
+        namespace: 'ns',
+      ));
+
+      expect(captured, isNotNull);
+      expect(captured!.method, equals('POST'));
+      expect(captured!.url.toString(), endsWith('/memory/chat'));
+      final body = jsonDecode(captured!.body) as Map<String, dynamic>;
+      expect(body['messages'], hasLength(1));
+      expect(body['namespace'], equals('ns'));
+    });
+
+    test('throws on empty messages', () {
+      final client = createClient();
+      expect(
+        () => client.chatMemory(ChatMemoryParams(messages: [])),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+  });
+
+  group('chatMemoryContext', () {
+    test('sends to /memory/conversations', () async {
+      http.Request? captured;
+      final client = createClient(
+        onRequest: (r) => captured = r,
+      );
+
+      await client.chatMemoryContext(ChatMemoryParams(
+        messages: [{'role': 'user', 'content': 'Hi'}],
+      ));
+
+      expect(captured!.url.toString(), endsWith('/memory/conversations'));
+    });
+  });
+
+  // ── Interactions ──
+
+  group('interactMemory', () {
+    test('sends correct request with entityNames', () async {
+      http.Request? captured;
+      final client = createClient(
+        onRequest: (r) => captured = r,
+      );
+
+      await client.interactMemory(InteractMemoryParams(
+        namespace: 'ns',
+        entityNames: ['ENTITY_A', 'ENTITY_B'],
+      ));
+
+      expect(captured, isNotNull);
+      expect(captured!.method, equals('POST'));
+      expect(captured!.url.toString(), endsWith('/memory/interact'));
+      final body = jsonDecode(captured!.body) as Map<String, dynamic>;
+      expect(body['entityNames'], equals(['ENTITY_A', 'ENTITY_B']));
+      expect(body['namespace'], equals('ns'));
+    });
+
+    test('throws on empty namespace', () {
+      final client = createClient();
+      expect(
+        () => client.interactMemory(InteractMemoryParams(
+          namespace: '',
+          entityNames: ['E'],
+        )),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    test('throws on empty entityNames', () {
+      final client = createClient();
+      expect(
+        () => client.interactMemory(InteractMemoryParams(
+          namespace: 'ns',
+          entityNames: [],
+        )),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+  });
+
+  group('recordInteractions', () {
+    test('sends to /memory/interactions', () async {
+      http.Request? captured;
+      final client = createClient(
+        onRequest: (r) => captured = r,
+      );
+
+      await client.recordInteractions(InteractMemoryParams(
+        namespace: 'ns',
+        entityNames: ['E'],
+      ));
+
+      expect(captured!.url.toString(), endsWith('/memory/interactions'));
+    });
+  });
+
   // ── Error handling ──
 
   group('error handling', () {

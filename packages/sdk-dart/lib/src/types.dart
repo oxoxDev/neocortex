@@ -294,3 +294,83 @@ class RecallMemoriesResponse {
     );
   }
 }
+
+// ── Chat ──
+
+class ChatMemoryParams {
+  final List<Map<String, String>> messages;
+  final String? namespace;
+  final double? temperature;
+  final int? maxTokens;
+  final String? model;
+
+  ChatMemoryParams({
+    required this.messages,
+    this.namespace,
+    this.temperature,
+    this.maxTokens,
+    this.model,
+  });
+
+  void validate() {
+    if (messages.isEmpty) {
+      throw ArgumentError('messages must not be empty');
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{
+      'messages': messages,
+    };
+    if (namespace != null) map['namespace'] = namespace;
+    if (temperature != null) map['temperature'] = temperature;
+    if (maxTokens != null) map['maxTokens'] = maxTokens;
+    if (model != null) map['model'] = model;
+    return map;
+  }
+}
+
+// ── Interactions ──
+
+class InteractMemoryParams {
+  final String namespace;
+  final List<String> entityNames;
+  final String? description;
+  final String? interactionLevel;
+  final List<String>? interactionLevels;
+  final int? timestamp;
+
+  InteractMemoryParams({
+    required this.namespace,
+    required this.entityNames,
+    this.description,
+    this.interactionLevel,
+    this.interactionLevels,
+    this.timestamp,
+  });
+
+  void validate() {
+    if (namespace.trim().isEmpty) {
+      throw ArgumentError('namespace is required');
+    }
+    if (entityNames.isEmpty) {
+      throw ArgumentError('entityNames must not be empty');
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{
+      'namespace': namespace,
+      'entityNames': entityNames,
+    };
+    if (description != null) map['description'] = description;
+    if (interactionLevel != null) {
+      map['interactionLevel'] = interactionLevel;
+    }
+    if (interactionLevels != null) {
+      map['interactionLevels'] = interactionLevels;
+    }
+    if (timestamp != null) map['timestamp'] = timestamp;
+    return map;
+  }
+}

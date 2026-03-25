@@ -70,6 +70,33 @@ class TinyHumansMemoryClient {
     return RecallMemoriesResponse.fromJson(result);
   }
 
+  // ── Chat ──
+
+  Future<Map<String, dynamic>> chatMemory(ChatMemoryParams params) async {
+    params.validate();
+    return await _post('/memory/chat', params.toJson());
+  }
+
+  Future<Map<String, dynamic>> chatMemoryContext(
+      ChatMemoryParams params) async {
+    params.validate();
+    return await _post('/memory/conversations', params.toJson());
+  }
+
+  // ── Interactions ──
+
+  Future<Map<String, dynamic>> interactMemory(
+      InteractMemoryParams params) async {
+    params.validate();
+    return await _post('/memory/interact', params.toJson());
+  }
+
+  Future<Map<String, dynamic>> recordInteractions(
+      InteractMemoryParams params) async {
+    params.validate();
+    return await _post('/memory/interactions', params.toJson());
+  }
+
   Future<Map<String, dynamic>> _post(
       String path, Map<String, dynamic> body) async {
     final url = Uri.parse('$_baseUrl$path');
