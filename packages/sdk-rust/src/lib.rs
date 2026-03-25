@@ -4,7 +4,6 @@
 pub mod error;
 pub mod types;
 
-
 pub use error::TinyHumansError;
 pub use types::*;
 
@@ -310,7 +309,9 @@ impl TinyHumansMemoryClient {
         namespace: Option<&str>,
     ) -> Result<GetDocumentResponse, TinyHumansError> {
         if document_id.trim().is_empty() {
-            return Err(TinyHumansError::Validation("document_id is required".into()));
+            return Err(TinyHumansError::Validation(
+                "document_id is required".into(),
+            ));
         }
         let mut path = format!("/memory/documents/{document_id}");
         if let Some(ns) = namespace {
@@ -328,7 +329,9 @@ impl TinyHumansMemoryClient {
         namespace: &str,
     ) -> Result<DeleteDocumentResponse, TinyHumansError> {
         if document_id.trim().is_empty() {
-            return Err(TinyHumansError::Validation("document_id is required".into()));
+            return Err(TinyHumansError::Validation(
+                "document_id is required".into(),
+            ));
         }
         if namespace.trim().is_empty() {
             return Err(TinyHumansError::Validation("namespace is required".into()));
@@ -345,7 +348,9 @@ impl TinyHumansMemoryClient {
         params: SyncMemoryParams,
     ) -> Result<SyncMemoryResponse, TinyHumansError> {
         if params.workspace_id.is_empty() {
-            return Err(TinyHumansError::Validation("workspaceId is required".into()));
+            return Err(TinyHumansError::Validation(
+                "workspaceId is required".into(),
+            ));
         }
         if params.agent_id.is_empty() {
             return Err(TinyHumansError::Validation("agentId is required".into()));
@@ -432,25 +437,27 @@ impl TinyHumansMemoryClient {
             req = req.json(body);
         }
 
-        let res = req
-            .send()
-            .await
-            .map_err(|e| {
-                let mut cause = String::new();
-                let mut src: &dyn std::error::Error = &e;
-                loop {
-                    cause.push_str(&format!(" → {src}"));
-                    match src.source() {
-                        Some(next) => src = next,
-                        None => break,
-                    }
+        let res = req.send().await.map_err(|e| {
+            let mut cause = String::new();
+            let mut src: &dyn std::error::Error = &e;
+            loop {
+                cause.push_str(&format!(" → {src}"));
+                match src.source() {
+                    Some(next) => src = next,
+                    None => break,
                 }
-                log::warn!("[tinyhumansai] ← {} {} send error:{}", method, url, cause);
-                TinyHumansError::Http(e.to_string())
-            })?;
+            }
+            log::warn!("[tinyhumansai] ← {} {} send error:{}", method, url, cause);
+            TinyHumansError::Http(e.to_string())
+        })?;
 
         let status = res.status();
-        log::info!("[tinyhumansai] ← {} {} status={}", method, url, status.as_u16());
+        log::info!(
+            "[tinyhumansai] ← {} {} status={}",
+            method,
+            url,
+            status.as_u16()
+        );
 
         let text = res
             .text()
