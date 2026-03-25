@@ -2,6 +2,8 @@
 
 * [Introducing Neocortex 🧠](README.md)
 * [How Human Memory Works?](how-memory-works.md)
+* [Architecture Overview](architecture-overview/README.md)
+  * [Privacy Architecture](architecture-overview/privacy-architecture.md)
 * [Getting an API Key](api-key.md)
 
 ## Use Cases
@@ -40,3 +42,11 @@
 * [BABILong](benchmarks/babilong.md)
 * [Vending-Bench](benchmarks/vending-bench.md)
 * [Run Your Own](benchmarks/run-your-own.md)
+
+## FAQ
+
+* [General](faq/general.md)
+* [How it Works](faq/how-it-works.md)
+* [Data & Organization](faq/data-and-organization.md)
+* [Privacy and Security](faq/privacy-and-security.md)
+* [Pricing & Access](faq/pricing-and-access.md)
