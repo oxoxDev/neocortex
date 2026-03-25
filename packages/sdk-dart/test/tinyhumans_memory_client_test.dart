@@ -421,6 +421,65 @@ void main() {
     });
   });
 
+  // ── Advanced Recall ──
+
+  group('recallThoughts', () {
+    test('sends to /memory/memories/thoughts', () async {
+      http.Request? captured;
+      final client = createClient(
+        onRequest: (r) => captured = r,
+      );
+
+      await client.recallThoughts(RecallThoughtsParams(namespace: 'ns'));
+
+      expect(captured!.method, equals('POST'));
+      expect(
+          captured!.url.toString(), endsWith('/memory/memories/thoughts'));
+      final body = jsonDecode(captured!.body) as Map<String, dynamic>;
+      expect(body['namespace'], equals('ns'));
+    });
+
+    test('works with no params', () async {
+      http.Request? captured;
+      final client = createClient(
+        onRequest: (r) => captured = r,
+      );
+
+      await client.recallThoughts();
+
+      expect(captured!.url.toString(), endsWith('/memory/memories/thoughts'));
+    });
+  });
+
+  group('queryMemoryContext', () {
+    test('sends correct request', () async {
+      http.Request? captured;
+      final client = createClient(
+        onRequest: (r) => captured = r,
+      );
+
+      await client.queryMemoryContext(QueryMemoryContextParams(
+        query: 'test query',
+        namespace: 'ns',
+      ));
+
+      expect(captured!.method, equals('POST'));
+      expect(captured!.url.toString(), endsWith('/memory/queries'));
+      final body = jsonDecode(captured!.body) as Map<String, dynamic>;
+      expect(body['query'], equals('test query'));
+      expect(body['namespace'], equals('ns'));
+    });
+
+    test('throws on empty query', () {
+      final client = createClient();
+      expect(
+        () => client.queryMemoryContext(
+            QueryMemoryContextParams(query: '')),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+  });
+
   // ── Error handling ──
 
   group('error handling', () {

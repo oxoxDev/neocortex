@@ -374,3 +374,82 @@ class InteractMemoryParams {
     return map;
   }
 }
+
+// ── Advanced Recall ──
+
+class RecallThoughtsParams {
+  final String? namespace;
+  final int? maxChunks;
+  final double? temperature;
+  final int? randomnessSeed;
+  final bool? persist;
+  final bool? enablePredictionCheck;
+  final String? thoughtPrompt;
+
+  RecallThoughtsParams({
+    this.namespace,
+    this.maxChunks,
+    this.temperature,
+    this.randomnessSeed,
+    this.persist,
+    this.enablePredictionCheck,
+    this.thoughtPrompt,
+  });
+
+  void validate() {}
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{};
+    if (namespace != null) map['namespace'] = namespace;
+    if (maxChunks != null) map['maxChunks'] = maxChunks;
+    if (temperature != null) map['temperature'] = temperature;
+    if (randomnessSeed != null) map['randomnessSeed'] = randomnessSeed;
+    if (persist != null) map['persist'] = persist;
+    if (enablePredictionCheck != null) {
+      map['enablePredictionCheck'] = enablePredictionCheck;
+    }
+    if (thoughtPrompt != null) map['thoughtPrompt'] = thoughtPrompt;
+    return map;
+  }
+}
+
+class QueryMemoryContextParams {
+  final String query;
+  final String? namespace;
+  final int? maxChunks;
+  final bool? includeReferences;
+  final List<String>? documentIds;
+  final bool? recallOnly;
+  final String? llmQuery;
+
+  QueryMemoryContextParams({
+    required this.query,
+    this.namespace,
+    this.maxChunks,
+    this.includeReferences,
+    this.documentIds,
+    this.recallOnly,
+    this.llmQuery,
+  });
+
+  void validate() {
+    if (query.trim().isEmpty) {
+      throw ArgumentError('query is required');
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{
+      'query': query,
+    };
+    if (namespace != null) map['namespace'] = namespace;
+    if (maxChunks != null) map['maxChunks'] = maxChunks;
+    if (includeReferences != null) {
+      map['includeReferences'] = includeReferences;
+    }
+    if (documentIds != null) map['documentIds'] = documentIds;
+    if (recallOnly != null) map['recallOnly'] = recallOnly;
+    if (llmQuery != null) map['llmQuery'] = llmQuery;
+    return map;
+  }
+}

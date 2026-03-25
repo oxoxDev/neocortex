@@ -97,6 +97,21 @@ class TinyHumansMemoryClient {
     return await _post('/memory/interactions', params.toJson());
   }
 
+  // ── Advanced Recall ──
+
+  Future<Map<String, dynamic>> recallThoughts(
+      [RecallThoughtsParams? params]) async {
+    params ??= RecallThoughtsParams();
+    params.validate();
+    return await _post('/memory/memories/thoughts', params.toJson());
+  }
+
+  Future<Map<String, dynamic>> queryMemoryContext(
+      QueryMemoryContextParams params) async {
+    params.validate();
+    return await _post('/memory/queries', params.toJson());
+  }
+
   Future<Map<String, dynamic>> _post(
       String path, Map<String, dynamic> body) async {
     final url = Uri.parse('$_baseUrl$path');
