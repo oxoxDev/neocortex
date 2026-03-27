@@ -306,17 +306,36 @@ impl TinyHumansMemoryClient {
         }
         for (i, item) in params.items.iter().enumerate() {
             if item.document_id.is_empty() {
-                return Err(TinyHumansError::Validation(
-                    format!("items[{}]: documentId is required", i),
-                ));
+                return Err(TinyHumansError::Validation(format!(
+                    "items[{}]: documentId is required",
+                    i
+                )));
             }
         }
         self.post("/memory/documents/batch", &params).await
     }
 
     /// List ingested memory documents. GET /memory/documents
-    pub async fn list_documents(&self) -> Result<ListDocumentsResponse, TinyHumansError> {
-        self.get("/memory/documents").await
+    pub async fn list_documents(
+        &self,
+        params: ListDocumentsParams,
+    ) -> Result<ListDocumentsResponse, TinyHumansError> {
+        let mut qs_parts: Vec<String> = Vec::new();
+        if let Some(ns) = params.namespace {
+            qs_parts.push(format!("namespace={ns}"));
+        }
+        if let Some(limit) = params.limit {
+            qs_parts.push(format!("limit={limit}"));
+        }
+        if let Some(offset) = params.offset {
+            qs_parts.push(format!("offset={offset}"));
+        }
+        let qs = if qs_parts.is_empty() {
+            String::new()
+        } else {
+            format!("?{}", qs_parts.join("&"))
+        };
+        self.get(&format!("/memory/documents{qs}")).await
     }
 
     /// Get details for a memory document. GET /memory/documents/{documentId}
@@ -458,10 +477,9 @@ impl TinyHumansMemoryClient {
             ["completed", "done", "succeeded", "success"]
                 .into_iter()
                 .collect();
-        let failed: std::collections::HashSet<&str> =
-            ["failed", "error", "cancelled", "canceled"]
-                .into_iter()
-                .collect();
+        let failed: std::collections::HashSet<&str> = ["failed", "error", "cancelled", "canceled"]
+            .into_iter()
+            .collect();
 
         let deadline = std::time::Instant::now() + std::time::Duration::from_millis(timeout);
         let mut last: Option<IngestionJobStatusResponse> = None;
